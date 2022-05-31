@@ -654,6 +654,10 @@ struct v4l2_subdev_pad_ops {
 			     struct v4l2_subdev_format *source_fmt,
 			     struct v4l2_subdev_format *sink_fmt);
 #endif /* CONFIG_MEDIA_CONTROLLER */
+#ifdef CONFIG_VIDEO_V4L2_SUBDEV_API
+	int (*get_mbus_config)(struct v4l2_subdev *sd,
+			       unsigned int pad, struct v4l2_mbus_config *cfg);
+#endif
 	int (*get_frame_desc)(struct v4l2_subdev *sd, unsigned int pad,
 			      struct v4l2_mbus_frame_desc *fd);
 	int (*set_frame_desc)(struct v4l2_subdev *sd, unsigned int pad,

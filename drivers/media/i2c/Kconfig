@@ -65,6 +65,15 @@ config VIDEO_TEA6415C
 	  To compile this driver as a module, choose M here: the
 	  module will be called tea6415c.
 
+config VIDEO_LT7911D
+	tristate "Lontium eDP to MIPI CSi bridge"
+	depends on I2C
+	---help---
+	  Support for tea6415c audio decoder chip found on some bt8xx boards.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called tea6415c.
+
 config VIDEO_TEA6420
 	tristate "Philips TEA6420 audio processor"
 	depends on I2C

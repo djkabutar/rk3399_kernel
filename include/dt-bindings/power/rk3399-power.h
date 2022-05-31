@@ -23,6 +23,7 @@
 #define RK3399_PD_PERILP	13
 #define RK3399_PD_PERIHP	14
 #define RK3399_PD_VIO		15
+#define RK3399_PD_VI		37
 #define RK3399_PD_VO		16
 #define RK3399_PD_VOPB		17
 #define RK3399_PD_VOPL		18

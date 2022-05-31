@@ -231,6 +231,7 @@
 #define ACLK_GIC_PRE	 		262
 #define ACLK_VOP0_PRE	 		263
 #define ACLK_VOP1_PRE	 		264
+#define CLK_MIPI_CAMARAOUT_M1        265
 
 /* pclk gates */
 #define PCLK_PERIHP			320

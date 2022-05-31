@@ -29,6 +29,118 @@
 
 #define MEDIA_API_VERSION	KERNEL_VERSION(0, 1, 0)
 
+#define MEDIA_ENT_F_BASE			0x00000000
+#define MEDIA_ENT_F_OLD_BASE			0x00010000
+#define MEDIA_ENT_F_OLD_SUBDEV_BASE		0x00020000
+
+/*
+ * Initial value to be used when a new entity is created
+ * Drivers should change it to something useful.
+ */
+#define MEDIA_ENT_F_UNKNOWN			MEDIA_ENT_F_BASE
+
+/*
+ * Subdevs are initialized with MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN in order
+ * to preserve backward compatibility. Drivers must change to the proper
+ * subdev type before registering the entity.
+ */
+#define MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN		MEDIA_ENT_F_OLD_SUBDEV_BASE
+
+/*
+ * DVB entity functions
+ */
+#define MEDIA_ENT_F_DTV_DEMOD			(MEDIA_ENT_F_BASE + 0x00001)
+#define MEDIA_ENT_F_TS_DEMUX			(MEDIA_ENT_F_BASE + 0x00002)
+#define MEDIA_ENT_F_DTV_CA			(MEDIA_ENT_F_BASE + 0x00003)
+#define MEDIA_ENT_F_DTV_NET_DECAP		(MEDIA_ENT_F_BASE + 0x00004)
+
+/*
+ * I/O entity functions
+ */
+#define MEDIA_ENT_F_IO_V4L			(MEDIA_ENT_F_OLD_BASE + 1)
+#define MEDIA_ENT_F_IO_DTV			(MEDIA_ENT_F_BASE + 0x01001)
+#define MEDIA_ENT_F_IO_VBI			(MEDIA_ENT_F_BASE + 0x01002)
+#define MEDIA_ENT_F_IO_SWRADIO			(MEDIA_ENT_F_BASE + 0x01003)
+
+/*
+ * Sensor functions
+ */
+#define MEDIA_ENT_F_CAM_SENSOR			(MEDIA_ENT_F_OLD_SUBDEV_BASE + 1)
+#define MEDIA_ENT_F_FLASH			(MEDIA_ENT_F_OLD_SUBDEV_BASE + 2)
+#define MEDIA_ENT_F_LENS			(MEDIA_ENT_F_OLD_SUBDEV_BASE + 3)
+
+/*
+ * Digital TV, analog TV, radio and/or software defined radio tuner functions.
+ *
+ * It is a responsibility of the master/bridge drivers to add connectors
+ * and links for MEDIA_ENT_F_TUNER. Please notice that some old tuners
+ * may require the usage of separate I2C chips to decode analog TV signals,
+ * when the master/bridge chipset doesn't have its own TV standard decoder.
+ * On such cases, the IF-PLL staging is mapped via one or two entities:
+ * MEDIA_ENT_F_IF_VID_DECODER and/or MEDIA_ENT_F_IF_AUD_DECODER.
+ */
+#define MEDIA_ENT_F_TUNER			(MEDIA_ENT_F_OLD_SUBDEV_BASE + 5)
+
+/*
+ * Analog TV IF-PLL decoder functions
+ *
+ * It is a responsibility of the master/bridge drivers to create links
+ * for MEDIA_ENT_F_IF_VID_DECODER and MEDIA_ENT_F_IF_AUD_DECODER.
+ */
+#define MEDIA_ENT_F_IF_VID_DECODER		(MEDIA_ENT_F_BASE + 0x02001)
+#define MEDIA_ENT_F_IF_AUD_DECODER		(MEDIA_ENT_F_BASE + 0x02002)
+
+/*
+ * Audio entity functions
+ */
+#define MEDIA_ENT_F_AUDIO_CAPTURE		(MEDIA_ENT_F_BASE + 0x03001)
+#define MEDIA_ENT_F_AUDIO_PLAYBACK		(MEDIA_ENT_F_BASE + 0x03002)
+#define MEDIA_ENT_F_AUDIO_MIXER			(MEDIA_ENT_F_BASE + 0x03003)
+
+/*
+ * Processing entity functions
+ */
+#define MEDIA_ENT_F_PROC_VIDEO_COMPOSER		(MEDIA_ENT_F_BASE + 0x4001)
+#define MEDIA_ENT_F_PROC_VIDEO_PIXEL_FORMATTER	(MEDIA_ENT_F_BASE + 0x4002)
+#define MEDIA_ENT_F_PROC_VIDEO_PIXEL_ENC_CONV	(MEDIA_ENT_F_BASE + 0x4003)
+#define MEDIA_ENT_F_PROC_VIDEO_LUT		(MEDIA_ENT_F_BASE + 0x4004)
+#define MEDIA_ENT_F_PROC_VIDEO_SCALER		(MEDIA_ENT_F_BASE + 0x4005)
+#define MEDIA_ENT_F_PROC_VIDEO_STATISTICS	(MEDIA_ENT_F_BASE + 0x4006)
+#define MEDIA_ENT_F_PROC_VIDEO_ENCODER		(MEDIA_ENT_F_BASE + 0x4007)
+#define MEDIA_ENT_F_PROC_VIDEO_DECODER		(MEDIA_ENT_F_BASE + 0x4008)
+
+/*
+ * Switch and bridge entity functions
+ */
+#define MEDIA_ENT_F_VID_MUX			(MEDIA_ENT_F_BASE + 0x5001)
+#define MEDIA_ENT_F_VID_IF_BRIDGE		(MEDIA_ENT_F_BASE + 0x5002)
+
+/*
+ * Video decoder/encoder functions
+ */
+#define MEDIA_ENT_F_ATV_DECODER			(MEDIA_ENT_F_OLD_SUBDEV_BASE + 4)
+#define MEDIA_ENT_F_DV_DECODER			(MEDIA_ENT_F_BASE + 0x6001)
+#define MEDIA_ENT_F_DV_ENCODER			(MEDIA_ENT_F_BASE + 0x6002)
+
+/* Entity flags */
+#define MEDIA_ENT_FL_DEFAULT			(1 << 0)
+#define MEDIA_ENT_FL_CONNECTOR			(1 << 1)
+
+/* OR with the entity id value to find the next entity */
+#define MEDIA_ENT_ID_FLAG_NEXT			(1 << 31)
+
+#define MEDIA_PAD_FL_SINK			(1 << 0)
+#define MEDIA_PAD_FL_SOURCE			(1 << 1)
+#define MEDIA_PAD_FL_MUST_CONNECT		(1 << 2)
+
+#define MEDIA_LNK_FL_ENABLED			(1 << 0)
+#define MEDIA_LNK_FL_IMMUTABLE			(1 << 1)
+#define MEDIA_LNK_FL_DYNAMIC			(1 << 2)
+
+#define MEDIA_LNK_FL_LINK_TYPE			(0xf << 28)
+#  define MEDIA_LNK_FL_DATA_LINK		(0 << 28)
+#  define MEDIA_LNK_FL_INTERFACE_LINK		(1 << 28)
+
 struct media_device_info {
 	char driver[16];
 	char model[32];

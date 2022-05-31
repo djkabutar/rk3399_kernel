@@ -648,7 +648,35 @@
 		pinctrl-0 = <&i2c7_xfer>;
 		#address-cells = <1>;
 		#size-cells = <0>;
-		status = "disabled";
+		status = "okay";
+
+		lt7911d: lt7911d@2b {
+			compatible = "lontium,lt7911d";
+			status = "okay";
+			reg = <0x2b>;
+			clocks = <&cru CLK_MIPI_CAMARAOUT_M1>;
+			clock-names = "xvclk";
+			interrupt-parent = <&gpio3>;
+			interrupts = <RK_PD4 IRQ_TYPE_EDGE_RISING>;
+			power-domains = <&power RK3399_PD_VI>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&mipim1_camera1_clk>;
+			reset-gpios = <&gpio3 RK_PC6 GPIO_ACTIVE_LOW>;
+			power-gpios = <&gpio0 RK_PD6 GPIO_ACTIVE_HIGH>;
+			hpd-ctl-gpios = <&gpio3 RK_PC5 GPIO_ACTIVE_HIGH>;
+			plugin-det-gpios = <&gpio0 RK_PD6 GPIO_ACTIVE_LOW>;
+			rockchip,camera-module-index = <0>;
+			rockchip,camera-module-facing = "back";
+			rockchip,camera-module-name = "LT7911D";
+			rockchip,camera-module-lens-name = "NC";
+
+			port {
+				lt7911d_out: endpoint {
+					remote-endpoint = <&edp_in>;
+					data-lanes = <1 2 3 4>;
+				};
+			};
+		};
 	};
 
 	uart0: serial@ff180000 {
@@ -1834,7 +1862,7 @@
 		power-domains = <&power RK3399_PD_VOPL>;
 		resets = <&cru SRST_A_VOP1>, <&cru SRST_H_VOP1>, <&cru SRST_D_VOP1>;
 		reset-names = "axi", "ahb", "dclk";
-		status = "disabled";
+		status = "okay";
 
 		vopl_out: port {
 			#address-cells = <1>;
@@ -1848,6 +1876,7 @@
 			vopl_out_edp: endpoint@1 {
 				reg = <1>;
 				remote-endpoint = <&edp_in_vopl>;
+				status = "disabled";
 			};
 
 			vopl_out_hdmi: endpoint@2 {
@@ -1903,7 +1932,7 @@
 		reset-names = "axi", "ahb", "dclk";
 		power-domains = <&power RK3399_PD_VOPB>;
 		iommus = <&vopb_mmu>;
-		status = "disabled";
+		status = "okay";
 
 		vopb_out: port {
 			#address-cells = <1>;
@@ -1912,6 +1941,7 @@
 			vopb_out_edp: endpoint@0 {
 				reg = <0>;
 				remote-endpoint = <&edp_in_vopb>;
+				status = "disabled";
 			};
 
 			vopb_out_dsi: endpoint@1 {
@@ -2143,18 +2173,24 @@
 		power-domains = <&power RK3399_PD_EDP>;
 		resets = <&cru SRST_P_EDP_CTRL>;
 		reset-names = "dp";
-		rockchip,grf = <&grf>;
-		status = "disabled";
+		status = "okay";
 
 		ports {
 			#address-cells = <1>;
 			#size-cells = <0>;
 
 			edp_in: port@0 {
-				reg = <0>;
+				reg = <1>;
+				remote-endpoint = <&lt7911d_out>;
+				data-lanes = <1 2 3 4>;
+				status = "okay";
+			};
+
+			port@1 {
+				reg = <1>;
 				#address-cells = <1>;
 				#size-cells = <0>;
-
+				status = "disabled";
 				edp_in_vopb: endpoint@0 {
 					reg = <0>;
 					remote-endpoint = <&vopb_out_edp>;
@@ -2987,6 +3023,14 @@
 			hdmi_cec: hdmi-cec {
 				rockchip,pins =
 					<4 23 RK_FUNC_1 &pcfg_pull_none>;
+			};
+		};
+
+		mipi {
+			mipim1_camera1_clk: mipim1-camera1-clk {
+				rockchip,pins =
+					/* mipim1_camera1_clk */
+					<3 RK_PA6 4 &pcfg_pull_none>;
 			};
 		};
 

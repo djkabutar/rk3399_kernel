@@ -172,6 +172,7 @@ PNAME(mux_pll_src_cpll_gpll_npll_p)		= { "dummy_cpll", "gpll", "npll" };
 PNAME(mux_pll_src_cpll_gpll_ppll_p)		= { "dummy_cpll", "gpll", "ppll" };
 PNAME(mux_pll_src_cpll_gpll_upll_p)		= { "dummy_cpll", "gpll", "upll" };
 PNAME(mux_pll_src_npll_cpll_gpll_p)		= { "npll", "dummy_cpll", "gpll" };
+PNAME(mux_24m_spll_gpll_cpll_p)		= { "xin24m", "spll", "gpll", "cpll" };
 PNAME(mux_pll_src_cpll_gpll_npll_ppll_p)	= { "dummy_cpll", "gpll", "npll",
 						    "ppll" };
 PNAME(mux_pll_src_cpll_gpll_npll_24m_p)		= { "dummy_cpll", "gpll", "npll",
@@ -756,7 +757,9 @@ static struct rockchip_clk_branch rk3399_clk_branches[] __initdata = {
 			RK3399_CLKSEL_CON(102), 0,
 			RK3399_CLKGATE_CON(9), 5, GFLAGS,
 			&rk3399_uart2_fracmux, RK3399_UART_FRAC_MAX_PRATE),
-
+	COMPOSITE(CLK_MIPI_CAMARAOUT_M1, "clk_mipi_camaraout_m1", mux_24m_spll_gpll_cpll_p, 0,
+			RK3399_CLKSEL_CON(19), 8, 2, MFLAGS, 0, 8, DFLAGS,
+			RK3399_CLKGATE_CON(5), 10, GFLAGS),
 	COMPOSITE_NOMUX(0, "clk_uart3_div", "clk_uart_src", 0,
 			RK3399_CLKSEL_CON(36), 0, 7, DFLAGS,
 			RK3399_CLKGATE_CON(9), 6, GFLAGS),

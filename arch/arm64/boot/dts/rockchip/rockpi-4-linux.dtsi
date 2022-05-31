@@ -175,7 +175,7 @@
 	};
 
 	hdmi_codec: hdmi-codec {
-		status = "okay";
+		status = "disabled";
 		compatible = "simple-audio-card";
 		simple-audio-card,format = "i2s";
 		simple-audio-card,mclk-fs = <256>;
@@ -289,7 +289,7 @@
 	#sound-dai-cells = <0>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&hdmi_i2c_xfer>, <&hdmi_cec>;
-	status = "okay";
+	status = "disabled";
 };
 
 &sdmmc {
@@ -1252,10 +1252,14 @@
 };
 
 &hdmi_in_vopb {
-	status = "okay";
+	status = "disabled";
 };
 
 &route_hdmi {
-	status = "okay";
+	status = "disabled";
 	connect = <&vopb_out_hdmi>;
 };
+&edp {
+	status = "okay";
+};
+

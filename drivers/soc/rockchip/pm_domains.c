@@ -1006,6 +1006,7 @@ static const struct rockchip_domain_info rk3399_pm_domains[] = {
 	[RK3399_PD_PERIHP]	= DOMAIN_RK3399(12, 12, 2, true),
 	[RK3399_PD_CENTER]	= DOMAIN_RK3399(13, 13, 14, true),
 	[RK3399_PD_VIO]		= DOMAIN_RK3399(14, 14, 17, false),
+	[RK3399_PD_VI]		= DOMAIN_RK3399(13, 12, 10, false),
 	[RK3399_PD_GPU]		= DOMAIN_RK3399(15, 15, 0, false),
 	[RK3399_PD_VCODEC]	= DOMAIN_RK3399(16, 16, 3, false),
 	[RK3399_PD_VDU]		= DOMAIN_RK3399(17, 17, 4, false),
