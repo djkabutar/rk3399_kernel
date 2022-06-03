@@ -38,7 +38,6 @@
 #include "lt7911d.h"
 
 #define DRIVER_VERSION			KERNEL_VERSION(0, 0x01, 0x02)
-#define DEBUG
 
 static int debug;
 module_param(debug, int, 0644);
@@ -197,7 +196,7 @@ static void i2c_rd(struct v4l2_subdev *sd, u16 reg, u8 *values, u32 n)
 
 	err = i2c_transfer(client->adapter, msgs, ARRAY_SIZE(msgs));
 	if (err != ARRAY_SIZE(msgs)) {
-		printk(KERN_DEBUG "%s: reading register 0x%x from 0x%x failed\n",
+		v4l2_err(sd, "%s: reading register 0x%x from 0x%x failed\n",
 				__func__, reg, client->addr);
 	}
 
@@ -206,19 +205,19 @@ static void i2c_rd(struct v4l2_subdev *sd, u16 reg, u8 *values, u32 n)
 
 	switch (n) {
 	case 1:
-		printk(KERN_DEBUG "I2C read 0x%04x = 0x%02x\n",
+		v4l2_info(sd, "I2C read 0x%04x = 0x%02x\n",
 			reg, values[0]);
 		break;
 	case 2:
-		printk(KERN_DEBUG "I2C read 0x%04x = 0x%02x%02x\n",
+		v4l2_info(sd, "I2C read 0x%04x = 0x%02x%02x\n",
 			reg, values[1], values[0]);
 		break;
 	case 4:
-		printk(KERN_DEBUG "I2C read 0x%04x = 0x%02x%02x%02x%02x\n",
+		v4l2_info(sd, "I2C read 0x%04x = 0x%02x%02x%02x%02x\n",
 			reg, values[3], values[2], values[1], values[0]);
 		break;
 	default:
-		printk(KERN_DEBUG "I2C read %d bytes from address 0x%04x\n",
+		v4l2_info(sd, "I2C read %d bytes from address 0x%04x\n",
 			n, reg);
 	}
 }
@@ -254,7 +253,7 @@ static void i2c_wr(struct v4l2_subdev *sd, u16 reg, u8 *values, u32 n)
 
 	err = i2c_transfer(client->adapter, msgs, ARRAY_SIZE(msgs));
 	if (err < 0) {
-		printk(KERN_DEBUG "%s: writing register 0x%x from 0x%x failed\n",
+		v4l2_err(sd, "%s: writing register 0x%x from 0x%x failed\n",
 				__func__, reg, client->addr);
 		return;
 	}
@@ -264,19 +263,19 @@ static void i2c_wr(struct v4l2_subdev *sd, u16 reg, u8 *values, u32 n)
 
 	switch (n) {
 	case 1:
-		printk(KERN_DEBUG "I2C write 0x%04x = 0x%02x\n",
+		v4l2_info(sd, "I2C write 0x%04x = 0x%02x\n",
 				reg, data[1]);
 		break;
 	case 2:
-		printk(KERN_DEBUG "I2C write 0x%04x = 0x%02x%02x\n",
+		v4l2_info(sd, "I2C write 0x%04x = 0x%02x%02x\n",
 				reg, data[2], data[1]);
 		break;
 	case 4:
-		printk(KERN_DEBUG "I2C write 0x%04x = 0x%02x%02x%02x%02x\n",
+		v4l2_info(sd, "I2C write 0x%04x = 0x%02x%02x%02x%02x\n",
 				reg, data[4], data[3], data[2], data[1]);
 		break;
 	default:
-		printk(KERN_DEBUG "I2C write %d bytes from address 0x%04x\n",
+		v4l2_info(sd, "I2C write %d bytes from address 0x%04x\n",
 				n, reg);
 	}
 }
@@ -380,7 +379,7 @@ static bool lt7911d_rcv_supported_res(struct v4l2_subdev *sd, u32 width,
 	}
 
 	if (i == ARRAY_SIZE(supported_modes)) {
-		printk(KERN_DEBUG "%s do not support res wxh: %dx%d\n", __func__,
+		v4l2_err(sd, "%s do not support res wxh: %dx%d\n", __func__,
 				width, height);
 		return false;
 	} else {
@@ -444,7 +443,7 @@ static int lt7911d_get_detected_timings(struct v4l2_subdev *sd,
 
 	if (!lt7911d_rcv_supported_res(sd, hact, vact)) {
 		lt7911d->nosignal = true;
-		printk(KERN_DEBUG "%s: rcv err res, return no signal!\n", __func__);
+		v4l2_err(sd, "%s: rcv err res, return no signal!\n", __func__);
 		return -EINVAL;
 	}
 
@@ -463,12 +462,12 @@ static int lt7911d_get_detected_timings(struct v4l2_subdev *sd,
 	bt->vbackporch = vbp;
 	fps = fps_calc(bt);
 
-	printk(KERN_DEBUG "act:%dx%d, total:%dx%d, pixclk:%d, fps:%d\n",
+	v4l2_info(sd, "act:%dx%d, total:%dx%d, pixclk:%d, fps:%d\n",
 			hact, vact, htotal, vtotal, pixel_clock, fps);
-	printk(KERN_DEBUG "hfp:%d, hs:%d, hbp:%d, vfp:%d, vs:%d, vbp:%d\n",
+	v4l2_info(sd, "hfp:%d, hs:%d, hbp:%d, vfp:%d, vs:%d, vbp:%d\n",
 			bt->hfrontporch, bt->hsync, bt->hbackporch,
 			bt->vfrontporch, bt->vsync, bt->vbackporch);
-	printk(KERN_DEBUG "inerlaced:%d,\n", bt->interlaced);
+	v4l2_info(sd, "inerlaced:%d,\n", bt->interlaced);
 
 	return 0;
 }
@@ -749,11 +748,11 @@ static int lt7911d_dv_timings_cap(struct v4l2_subdev *sd,
 }
 
 static int lt7911d_g_mbus_config(struct v4l2_subdev *sd,
-			unsigned int pad, struct v4l2_mbus_config *cfg)
+				struct v4l2_mbus_config *cfg)
 {
 	struct lt7911d_state *lt7911d = to_state(sd);
 
-	cfg->type = V4L2_MBUS_CSI2_4_LANE;
+	cfg->type = V4L2_MBUS_CSI2;
 	cfg->flags = V4L2_MBUS_CSI2_NONCONTINUOUS_CLOCK |
 			V4L2_MBUS_CSI2_CHANNEL_0;
 
@@ -1013,6 +1012,7 @@ static const struct v4l2_subdev_video_ops lt7911d_video_ops = {
 	.s_dv_timings = lt7911d_s_dv_timings,
 	.g_dv_timings = lt7911d_g_dv_timings,
 	.query_dv_timings = lt7911d_query_dv_timings,
+	.g_mbus_config = lt7911d_g_mbus_config,
 	.s_stream = lt7911d_s_stream,
 	.g_frame_interval = lt7911d_g_frame_interval,
 };
@@ -1025,7 +1025,6 @@ static const struct v4l2_subdev_pad_ops lt7911d_pad_ops = {
 	.get_fmt = lt7911d_get_fmt,
 	.enum_dv_timings = lt7911d_enum_dv_timings,
 	.dv_timings_cap = lt7911d_dv_timings_cap,
-	.get_mbus_config = lt7911d_g_mbus_config,
 };
 
 static const struct v4l2_subdev_ops lt7911d_ops = {
@@ -1099,7 +1098,7 @@ static int lt7911d_init_v4l2_ctrls(struct lt7911d_state *lt7911d)
 	sd->ctrl_handler = &lt7911d->hdl;
 	if (lt7911d->hdl.error) {
 		ret = lt7911d->hdl.error;
-		printk(KERN_DEBUG "cfg v4l2 ctrls failed! ret:%d\n", ret);
+		v4l2_err(sd, "cfg v4l2 ctrls failed! ret:%d\n", ret);
 		return ret;
 	}
 
@@ -1108,7 +1107,7 @@ static int lt7911d_init_v4l2_ctrls(struct lt7911d_state *lt7911d)
 
 	if (lt7911d_update_controls(sd)) {
 		ret = -ENODEV;
-		printk(KERN_DEBUG "update v4l2 ctrls failed! ret:%d\n", ret);
+		v4l2_err(sd, "update v4l2 ctrls failed! ret:%d\n", ret);
 		return ret;
 	}
 
@@ -1120,7 +1119,7 @@ static int lt7911d_probe_of(struct lt7911d_state *lt7911d)
 {
 	struct device *dev = &lt7911d->i2c_client->dev;
 	struct device_node *node = dev->of_node;
-	struct v4l2_fwnode_endpoint endpoint = { .bus_type = 0 };
+	struct v4l2_fwnode_endpoint *endpoint;
 	struct device_node *ep;
 	int ret;
 
@@ -1133,14 +1132,14 @@ static int lt7911d_probe_of(struct lt7911d_state *lt7911d)
 	ret |= of_property_read_string(node, RKMODULE_CAMERA_LENS_NAME,
 			&lt7911d->len_name);
 	if (ret) {
-		printk(KERN_DEBUG "could not get module information!\n");
+		dev_err(dev, "could not get module information!\n");
 		return -EINVAL;
 	}
 
 	lt7911d->power_gpio = devm_gpiod_get_optional(dev, "power",
 			GPIOD_OUT_LOW);
 	if (IS_ERR(lt7911d->power_gpio)) {
-		printk(KERN_DEBUG "failed to get power gpio\n");
+		dev_err(dev, "failed to get power gpio\n");
 		ret = PTR_ERR(lt7911d->power_gpio);
 		return ret;
 	}
@@ -1148,7 +1147,7 @@ static int lt7911d_probe_of(struct lt7911d_state *lt7911d)
 	lt7911d->reset_gpio = devm_gpiod_get_optional(dev, "reset",
 			GPIOD_OUT_HIGH);
 	if (IS_ERR(lt7911d->reset_gpio)) {
-		printk(KERN_DEBUG "failed to get reset gpio\n");
+		dev_err(dev, "failed to get reset gpio\n");
 		ret = PTR_ERR(lt7911d->reset_gpio);
 		return ret;
 	}
@@ -1156,7 +1155,7 @@ static int lt7911d_probe_of(struct lt7911d_state *lt7911d)
 	lt7911d->plugin_det_gpio = devm_gpiod_get_optional(dev, "plugin-det",
 			GPIOD_IN);
 	if (IS_ERR(lt7911d->plugin_det_gpio)) {
-		printk(KERN_DEBUG "failed to get plugin det gpio\n");
+		dev_err(dev, "failed to get plugin det gpio\n");
 		ret = PTR_ERR(lt7911d->plugin_det_gpio);
 		return ret;
 	}
@@ -1164,45 +1163,46 @@ static int lt7911d_probe_of(struct lt7911d_state *lt7911d)
 	lt7911d->hpd_ctl_gpio = devm_gpiod_get_optional(dev, "hpd-ctl",
 			GPIOD_OUT_HIGH);
 	if (IS_ERR(lt7911d->hpd_ctl_gpio)) {
-		printk(KERN_DEBUG "failed to get hpd ctl gpio\n");
+		dev_err(dev, "failed to get hpd ctl gpio\n");
 		ret = PTR_ERR(lt7911d->hpd_ctl_gpio);
 		return ret;
 	}
 
 	ep = of_graph_get_next_endpoint(dev->of_node, NULL);
 	if (!ep) {
-		printk(KERN_DEBUG "missing endpoint node\n");
+		dev_err(dev, "missing endpoint node\n");
 		return -EINVAL;
 	}
 
-	ret = v4l2_fwnode_endpoint_alloc_parse(of_fwnode_handle(ep));
-	if (ret) {
-		printk(KERN_DEBUG "failed to parse endpoint\n");
-		goto put_node;
+	endpoint = v4l2_fwnode_endpoint_alloc_parse(of_fwnode_handle(ep));
+	if (IS_ERR(endpoint)) {
+		dev_err(dev, "failed to parse endpoint\n");
+		ret = PTR_ERR(endpoint);
+		return ret;
 	}
 
-	if (endpoint.bus_type != V4L2_MBUS_CSI2 ||
-			endpoint.bus.mipi_csi2.num_data_lanes == 0) {
-		printk(KERN_DEBUG "missing CSI-2 properties in endpoint\n");
+	if (endpoint->bus_type != V4L2_MBUS_CSI2 ||
+			endpoint->bus.mipi_csi2.num_data_lanes == 0) {
+		dev_err(dev, "missing CSI-2 properties in endpoint\n");
 		ret = -EINVAL;
 		goto free_endpoint;
 	}
 
 	lt7911d->xvclk = devm_clk_get(dev, "xvclk");
 	if (IS_ERR(lt7911d->xvclk)) {
-		printk(KERN_DEBUG "failed to get xvclk\n");
+		dev_err(dev, "failed to get xvclk\n");
 		ret = -EINVAL;
 		goto free_endpoint;
 	}
 
 	ret = clk_prepare_enable(lt7911d->xvclk);
 	if (ret) {
-		printk(KERN_DEBUG "Failed! to enable xvclk\n");
+		dev_err(dev, "Failed! to enable xvclk\n");
 		goto free_endpoint;
 	}
 
-	lt7911d->csi_lanes_in_use = endpoint.bus.mipi_csi2.num_data_lanes;
-	lt7911d->bus = endpoint.bus.mipi_csi2;
+	lt7911d->csi_lanes_in_use = endpoint->bus.mipi_csi2.num_data_lanes;
+	lt7911d->bus = endpoint->bus.mipi_csi2;
 	lt7911d->enable_hdcp = false;
 
 	gpiod_set_value(lt7911d->hpd_ctl_gpio, 0);
@@ -1212,9 +1212,7 @@ static int lt7911d_probe_of(struct lt7911d_state *lt7911d)
 	ret = 0;
 
 free_endpoint:
-	v4l2_fwnode_endpoint_free(&endpoint);
-put_node:
-	of_node_put(ep);
+	v4l2_fwnode_endpoint_free(endpoint);
 	return ret;
 }
 #else
@@ -1238,11 +1236,11 @@ static int lt7911d_check_chip_id(struct lt7911d_state *lt7911d)
 
 	chipid = (id_h << 8) | id_l;
 	if (chipid != LT7911D_CHIPID) {
-		printk(KERN_DEBUG "chipid err, read:%#x, expect:%#x\n",
+		dev_err(dev, "chipid err, read:%#x, expect:%#x\n",
 				chipid, LT7911D_CHIPID);
 		return -EINVAL;
 	}
-	printk(KERN_DEBUG "check chipid ok, id:%#x", chipid);
+	dev_info(dev, "check chipid ok, id:%#x", chipid);
 
 	return ret;
 }
@@ -1256,7 +1254,7 @@ static int lt7911d_probe(struct i2c_client *client,
 	char facing[2];
 	int err;
 
-	printk(KERN_DEBUG "driver version: %02x.%02x.%02x",
+	dev_info(dev, "driver version: %02x.%02x.%02x",
 		DRIVER_VERSION >> 16,
 		(DRIVER_VERSION & 0xff00) >> 8,
 		DRIVER_VERSION & 0x00ff);
@@ -1272,7 +1270,7 @@ static int lt7911d_probe(struct i2c_client *client,
 
 	err = lt7911d_probe_of(lt7911d);
 	if (err) {
-		printk(KERN_DEBUG "lt7911d_parse_of failed! err:%d\n", err);
+		v4l2_err(sd, "lt7911d_parse_of failed! err:%d\n", err);
 		return err;
 	}
 
@@ -1295,10 +1293,10 @@ static int lt7911d_probe(struct i2c_client *client,
 
 #if defined(CONFIG_MEDIA_CONTROLLER)
 	lt7911d->pad.flags = MEDIA_PAD_FL_SOURCE;
-	sd->entity.type = MEDIA_ENT_T_V4L2_SUBDEV_SENSOR;
+	sd->entity.type = MEDIA_ENT_F_CAM_SENSOR;
 	err = media_entity_init(&sd->entity, 1, &lt7911d->pad, 1);
 	if (err < 0) {
-		printk(KERN_DEBUG "media entity init failed! err:%d\n", err);
+		v4l2_err(sd, "media entity init failed! err:%d\n", err);
 		goto err_free_hdl;
 	}
 #endif
@@ -1313,7 +1311,7 @@ static int lt7911d_probe(struct i2c_client *client,
 		 LT7911D_NAME, dev_name(sd->dev));
 	err = v4l2_async_register_subdev_sensor_common(sd);
 	if (err < 0) {
-		printk(KERN_DEBUG "v4l2 register subdev failed! err:%d\n", err);
+		v4l2_err(sd, "v4l2 register subdev failed! err:%d\n", err);
 		goto err_clean_entity;
 	}
 
@@ -1330,7 +1328,7 @@ static int lt7911d_probe(struct i2c_client *client,
 				IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 				"lt7911d", lt7911d);
 		if (err) {
-			printk(KERN_DEBUG "request irq failed! err:%d\n", err);
+			v4l2_err(sd, "request irq failed! err:%d\n", err);
 			goto err_work_queues;
 		}
 	} else {
@@ -1344,23 +1342,23 @@ static int lt7911d_probe(struct i2c_client *client,
 
 	lt7911d->plugin_irq = gpiod_to_irq(lt7911d->plugin_det_gpio);
 	if (lt7911d->plugin_irq < 0)
-		printk(KERN_DEBUG "failed to get plugin det irq, maybe no use\n");
+		dev_err(dev, "failed to get plugin det irq, maybe no use\n");
 
 	err = devm_request_threaded_irq(dev, lt7911d->plugin_irq, NULL,
 			plugin_detect_irq_handler, IRQF_TRIGGER_FALLING |
 			IRQF_TRIGGER_RISING | IRQF_ONESHOT, "lt7911d",
 			lt7911d);
 	if (err)
-		printk(KERN_DEBUG "failed to register plugin det irq (%d), maybe no use\n", err);
+		dev_err(dev, "failed to register plugin det irq (%d), maybe no use\n", err);
 
 	err = v4l2_ctrl_handler_setup(sd->ctrl_handler);
 	if (err) {
-		printk(KERN_DEBUG "v4l2 ctrl handler setup failed! err:%d\n", err);
+		v4l2_err(sd, "v4l2 ctrl handler setup failed! err:%d\n", err);
 		goto err_work_queues;
 	}
 
 	lt7911d_config_hpd(sd);
-	printk(KERN_DEBUG "%s found @ 0x%x (%s)\n", client->name,
+	v4l2_info(sd, "%s found @ 0x%x (%s)\n", client->name,
 			client->addr << 1, client->adapter->name);
 
 	return 0;

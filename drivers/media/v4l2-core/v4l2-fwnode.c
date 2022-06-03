@@ -224,7 +224,47 @@ out_err:
 	v4l2_fwnode_endpoint_free(vep);
 	return ERR_PTR(rval);
 }
-EXPORT_SYMBOL_GPL(v4l2_fwnode_endpoint_alloc_parse);
+
+int v4l2_fwnode_lt7911d_endpoint_alloc_parse(struct fwnode_handle *fwnode,
+				     struct v4l2_fwnode_endpoint *vep)
+{
+	int rval;
+
+	rval = v4l2_fwnode_endpoint_parse(fwnode, vep);
+	if (rval < 0)
+		return rval;
+
+	rval = fwnode_property_read_u64_array(fwnode, "link-frequencies", NULL, 0);
+	if (rval > 0) {
+		unsigned int i;
+
+		vep->link_frequencies =
+			kmalloc_array(rval, sizeof(*vep->link_frequencies),
+				      GFP_KERNEL);
+		if (!vep->link_frequencies)
+			return -ENOMEM;
+
+		vep->nr_of_link_frequencies = rval;
+
+		rval = fwnode_property_read_u64_array(fwnode,
+						      "link-frequencies",
+						      vep->link_frequencies,
+						      vep->nr_of_link_frequencies);
+		if (rval < 0) {
+			v4l2_fwnode_endpoint_free(vep);
+			return rval;
+		}
+
+		for (i = 0; i < vep->nr_of_link_frequencies; i++)
+			pr_debug("link-frequencies %u value %llu\n", i,
+				 vep->link_frequencies[i]);
+	}
+
+	pr_debug("===== end parsing endpoint %pfw\n", fwnode);
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(v4l2_fwnode_lt7911d_endpoint_alloc_parse);
 
 int v4l2_fwnode_parse_link(struct fwnode_handle *__fwnode,
 			   struct v4l2_fwnode_link *link)

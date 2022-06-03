@@ -175,7 +175,7 @@
 	};
 
 	hdmi_codec: hdmi-codec {
-		status = "disabled";
+		status = "okay";
 		compatible = "simple-audio-card";
 		simple-audio-card,format = "i2s";
 		simple-audio-card,mclk-fs = <256>;
@@ -268,6 +268,18 @@
 			linux,default-trigger = "heartbeat";
 			default-state = "on";
 		};
+
+		// user-led3 {
+		// 	gpios = <&gpio3 RK_PC6 GPIO_ACTIVE_LOW>;
+		// 	linux,default-trigger = "heartbeat";
+		// 	default-state = "on";
+		// };
+
+		user-led4 {
+			gpios = <&gpio3 RK_PD6 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "none";
+			default-state = "off";
+		};
 	};
 
 	rk_headset {
@@ -289,8 +301,24 @@
 	#sound-dai-cells = <0>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&hdmi_i2c_xfer>, <&hdmi_cec>;
-	status = "disabled";
+	status = "okay";
 };
+
+// &csi2_dcphy0 {
+// 	status = "okay";
+
+// 	port {
+// 		#address-cells = <1>;
+// 		#size-cells = <0>;
+// 		#reg = <0>;
+
+// 		dp_mipi_in: endpoint {
+// 			reg = <1>;
+// 			remote-endpoint = <&lt7911d_out>;
+// 			data-lanes = <1 2 3 4>;
+// 		};
+// 	};
+// };
 
 &sdmmc {
 	supports-sd;
@@ -1231,7 +1259,7 @@
 };
 
 &dsi1_in_vopl {
-	status = "okay";
+	status = "disabled";
 };
 
 &dsi1_in_vopb {
@@ -1243,23 +1271,23 @@
  };
 
 &route_dsi1{
-	status = "okay";
+	status = "disabled";
 	connect = <&vopl_out_dsi1>;
 };
 
 &hdmi_in_vopl {
-	status = "disabled";
+	status = "okay";
 };
 
 &hdmi_in_vopb {
-	status = "disabled";
+	status = "okay";
 };
 
 &route_hdmi {
-	status = "disabled";
+	status = "okay";
 	connect = <&vopb_out_hdmi>;
 };
 &edp {
-	status = "okay";
+	status = "disabled";
 };
 

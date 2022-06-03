@@ -153,6 +153,33 @@ struct v4l2_fwnode_endpoint *v4l2_fwnode_endpoint_alloc_parse(
 	struct fwnode_handle *fwnode);
 
 /**
+ * v4l2_fwnode_lt7911d_endpoint_alloc_parse() - parse all fwnode node properties
+ * @fwnode: pointer to the endpoint's fwnode handle
+ * @vep: pointer to the V4L2 fwnode data structure
+ *
+ * All properties are optional. If none are found, we don't set any flags. This
+ * means the port has a static configuration and no properties have to be
+ * specified explicitly. If any properties that identify the bus as parallel
+ * are found and slave-mode isn't set, we set V4L2_MBUS_MASTER. Similarly, if
+ * we recognise the bus as serial CSI-2 and clock-noncontinuous isn't set, we
+ * set the V4L2_MBUS_CSI2_CONTINUOUS_CLOCK flag. The caller should hold a
+ * reference to @fwnode.
+ *
+ * v4l2_fwnode_endpoint_alloc_parse() has two important differences to
+ * v4l2_fwnode_endpoint_parse():
+ *
+ * 1. It also parses variable size data.
+ *
+ * 2. The memory it has allocated to store the variable size data must be freed
+ *    using v4l2_fwnode_endpoint_free() when no longer needed.
+ *
+ * Return: Pointer to v4l2_fwnode_endpoint if successful, on an error pointer
+ * on error.
+ */
+int v4l2_fwnode_lt7911d_endpoint_alloc_parse(struct fwnode_handle *fwnode,
+				     struct v4l2_fwnode_endpoint *vep);
+
+/**
  * v4l2_fwnode_parse_link() - parse a link between two endpoints
  * @fwnode: pointer to the endpoint's fwnode at the local end of the link
  * @link: pointer to the V4L2 fwnode link data structure

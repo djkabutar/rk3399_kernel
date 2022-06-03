@@ -1016,6 +1016,8 @@ static int pinctrl_commit_state(struct pinctrl *p, struct pinctrl_state *state)
 			ret = pinconf_apply_setting(setting);
 			break;
 		default:
+			printk(KERN_DEBUG "pinctrl: unknown setting type %d\n",
+				setting->type);
 			ret = -EINVAL;
 			break;
 		}
