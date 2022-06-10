@@ -1439,6 +1439,6 @@
 	status = "okay";
 };
 
-// &edp_in_vopl {
-// 	status = "okay";
-// };
+&edp_in_vopl {
+	status = "okay";
+};
