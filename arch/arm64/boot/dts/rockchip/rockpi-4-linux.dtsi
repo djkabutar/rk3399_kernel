@@ -175,7 +175,7 @@
 	};
 
 	hdmi_codec: hdmi-codec {
-		status = "okay";
+		status = "disabled";
 		compatible = "simple-audio-card";
 		simple-audio-card,format = "i2s";
 		simple-audio-card,mclk-fs = <256>;
@@ -307,15 +307,73 @@
 // &csi2_dcphy0 {
 // 	status = "okay";
 
-// 	port {
+// 	ports {
 // 		#address-cells = <1>;
 // 		#size-cells = <0>;
 // 		#reg = <0>;
 
-// 		dp_mipi_in: endpoint {
+// 		port@0 {
+// 			reg = <0>;
+// 			#address-cells = <1>;
+// 			#size-cells = <0>;
+
+// 			dp_mipi_in: endpoint@1 {
+// 				reg = <1>;
+// 				remote-endpoint = <&lt7911d_out>;
+// 				data-lanes = <1 2 3 4>;
+// 			};
+// 		};
+
+// 		port@1 {
 // 			reg = <1>;
-// 			remote-endpoint = <&lt7911d_out>;
-// 			data-lanes = <1 2 3 4>;
+// 			#address-cells = <1>;
+// 			#size-cells = <0>;
+
+// 			csidcphy0_out: endpoint@0 {
+// 				reg = <0>;
+// 				remote-endpoint = <&mipi0_csi2_input>;
+// 			};
+// 		};
+// 	};
+// };
+
+// &mipi0_csi2 {
+// 	status = "okay";
+
+// 	ports {
+// 		#address-cells = <1>;
+// 		#size-cells = <0>;
+
+// 		port@0 {
+// 			reg = <0>;
+// 			#address-cells = <1>;
+// 			#size-cells = <0>;
+
+// 			mipi0_csi2_input: endpoint@1 {
+// 				reg = <1>;
+// 				remote-endpoint = <&csidcphy0_out>;
+// 			};
+// 		};
+
+// 		port@1 {
+// 			reg = <1>;
+// 			#address-cells = <1>;
+// 			#size-cells = <0>;
+
+// 			mipi0_csi2_output: endpoint@0 {
+// 				reg = <0>;
+// 				remote-endpoint = <&cif_mipi_in0>;
+// 			};
+// 		};
+// 	};
+// };
+
+// &rkcif_mipi_lvds {
+// 	status = "okay";
+
+// 	port {
+// 		cif_mipi_in0: endpoint {
+// 			remote-endpoint = <&mipi0_csi2_output>;
 // 		};
 // 	};
 // };
@@ -752,6 +810,33 @@
 
 &i2c7 {
 	status = "okay";
+
+	lt7911d: lt7911d@2b {
+		compatible = "lontium,lt7911d";
+		status = "okay";
+		reg = <0x2b>;
+		clocks = <&cru CLK_MIPI_CAMARAOUT_M1>;
+		clock-names = "xvclk";
+		interrupt-parent = <&gpio3>;
+		interrupts = <RK_PD4 IRQ_TYPE_EDGE_RISING>;
+		power-domains = <&power RK3399_PD_VI>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&mipim1_camera1_clk>;
+		reset-gpios = <&gpio3 RK_PC4 GPIO_ACTIVE_LOW>;
+		power-gpios = <&gpio1 RK_PA6 GPIO_ACTIVE_HIGH>;
+		// hpd-ctl-gpios = <&gpio3 RK_PC5 GPIO_ACTIVE_HIGH>;
+		// plugin-det-gpios = <&gpio0 RK_PD6 GPIO_ACTIVE_LOW>;
+		rockchip,camera-module-index = <0>;
+		rockchip,camera-module-facing = "back";
+		rockchip,camera-module-name = "LT7911D";
+		rockchip,camera-module-lens-name = "NC";
+		// port {
+		// 	lt7911d_out: endpoint {
+		// 		remote-endpoint = <&dp_mipi_in>;
+		// 		data-lanes = <1 2 3 4>;
+		// 	};
+		// };
+	};
 };
 
 &cpu_l0 {
@@ -1276,7 +1361,7 @@
 };
 
 &hdmi_in_vopl {
-	status = "okay";
+	status = "disabled";
 };
 
 &hdmi_in_vopb {
@@ -1287,7 +1372,73 @@
 	status = "okay";
 	connect = <&vopb_out_hdmi>;
 };
+
 &edp {
 	status = "disabled";
+	/delete-node/ pinctrl-0;
 };
 
+// &csi2_dcphy0 {
+// 	status = "disabled";
+// 	ports{
+// 		#address-cells = <1>;
+// 		#size-cells = <0>;
+// 		port@0 {
+// 			reg = <0>;
+// 			#address-cells = <1>;
+// 			#size-cells = <0>;
+
+// 			edp_tx_in: endpoint@0 {
+// 				reg = <0>;
+// 				remote-endpoint = <&vopl_out_edp>;
+// 			};
+// 		};
+
+// 		port@1 {
+// 			reg = <1>;
+// 			#address-cells = <1>;
+// 			#size-cells = <0>;
+
+// 			edp_out_lt7911d: endpoint@0 {
+// 				reg = <0>;
+// 				remote-endpoint = <&lt7911d_in_vopl>;
+// 				data-lanes = <1 2 3 4>;
+// 			};
+// 		};
+
+// 		port@2 {
+// 			reg = <2>;
+// 			#address-cells = <1>;
+// 			#size-cells = <0>;
+
+// 			edp_tx_out: endpoint@0 {
+// 				reg = <0>;
+// 				remote-endpoint = <&edp_in_vopl>;
+// 			};
+// 		};
+// 	};
+// };
+
+// &lt7911d {
+// 	status = "disabled";
+// 	port {
+// 		lt7911d_in_vopl: endpoint {
+// 			status = "okay";
+// 			remote-endpoint = <&edp_out_lt7911d>;
+// 			data-lanes = <1 2 3 4>;
+// 		};
+// 	};
+// };
+
+// &vopl_out_edp {
+// 	status = "disabled";
+// 	remote-endpoint = <&edp_tx_in>;
+// };
+
+&route_edp {
+	status = "okay";
+};
+
+// &edp_in_vopl {
+// 	status = "okay";
+// };

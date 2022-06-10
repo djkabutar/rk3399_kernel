@@ -55,13 +55,12 @@
 
 / {
 	compatible = "rockchip,rk3399";
-
 	interrupt-parent = <&gic>;
 	#address-cells = <2>;
 	#size-cells = <2>;
 
 	aliases {
-		csi2dcphy0 = &csi2_dcphy0;
+		// csi2dcphy0 = &csi2_dcphy0;
 		dsi0 = &dsi;
 		dsi1 = &dsi1;
 		ethernet0 = &gmac;
@@ -651,33 +650,34 @@
 		#size-cells = <0>;
 		status = "okay";
 
-		lt7911d: lt7911d@0x56 {
-			compatible = "lontium,lt7911d";
-			status = "okay";
-			reg = <0x56>;
-			clocks = <&cru CLK_MIPI_CAMARAOUT_M1>;
-			clock-names = "xvclk";
-			interrupt-parent = <&gpio3>;
-			interrupts = <RK_PD4 IRQ_TYPE_EDGE_RISING>; // gpio3_d4 - hdmi tx
-			power-domains = <&power RK3399_PD_VI>;
-			pinctrl-names = "default";
-			pinctrl-0 = <&mipim1_camera1_clk>;
-			reset-gpios = <&gpio3 RK_PC6 GPIO_ACTIVE_LOW>; // gpio3_c6 - general gpio
-			power-gpios = <&gpio0 RK_PD6 GPIO_ACTIVE_HIGH>; // gpio0_d6 - general gpio
-			hpd-ctl-gpios = <&gpio3 RK_PC5 GPIO_ACTIVE_HIGH>; // gpio3_c5 - general gpio
-			plugin-det-gpios = <&gpio0 RK_PD6 GPIO_ACTIVE_LOW>; // gpio0_d6 - general gpio
-			rockchip,camera-module-index = <0>;
-			rockchip,camera-module-facing = "back";
-			rockchip,camera-module-name = "LT7911D";
-			rockchip,camera-module-lens-name = "NC";
+		// lt7911d: lt7911d@2b {
+		// 	compatible = "lontium,lt7911d";
+		// 	status = "okay";
+		// 	reg = <0x2b>;
+		// 	clocks = <&cru CLK_MIPI_CAMARAOUT_M1>;
+		// 	clock-names = "xvclk";
+		// 	interrupt-parent = <&gpio3>;
+		// 	interrupts = <RK_PD4 IRQ_TYPE_EDGE_RISING>; // gpio3_d4 - hdmi tx
+		// 	power-domains = <&power RK3399_PD_VI>;
+		// 	// pinctrl-names = "default";
+		// 	// pinctrl-0 = <&mipim1_camera1_clk>;
+		// 	reset-gpios = <&gpio3 RK_PC6 GPIO_ACTIVE_LOW>; // gpio3_c6 - general gpio
+		// 	power-gpios = <&gpio0 RK_PD6 GPIO_ACTIVE_HIGH>; // gpio0_d6 - general gpio
+		// 	hpd-ctl-gpios = <&gpio3 RK_PC5 GPIO_ACTIVE_HIGH>; // gpio3_c5 - general gpio
+		// 	plugin-det-gpios = <&gpio0 RK_PD6 GPIO_ACTIVE_LOW>; // gpio0_d6 - general gpio
+		// 	rockchip,camera-module-index = <0>;
+		// 	rockchip,camera-module-facing = "back";
+		// 	rockchip,camera-module-name = "LT7911D";
+		// 	rockchip,camera-module-lens-name = "NC";
 
-			port {
-				lt7911d_in: endpoint {
-					remote-endpoint = <&edp_out_lt7911d>;
-					data-lanes = <1 2 3 4>;
-				};
-			};
-		};
+		// 	// port {
+		// 	// 	lt7911d_in_vopl: endpoint {
+		// 	// 		status = "okay";
+		// 	// 		remote-endpoint = <&edp_out_lt7911d>;
+		// 	// 		data-lanes = <1 2 3 4>;
+		// 	// 	};
+		// 	// };
+		// };
 	};
 
 	uart0: serial@ff180000 {
@@ -1381,7 +1381,7 @@
 		>;
 		auto-min-freq = <400000>;
 		auto-freq-en = <1>;
-		status = "disabled";
+		status = "okay";
 	};
 
 	vpu: vpu_service@ff650000 {
@@ -1864,6 +1864,7 @@
 		power-domains = <&power RK3399_PD_VOPL>;
 		resets = <&cru SRST_A_VOP1>, <&cru SRST_H_VOP1>, <&cru SRST_D_VOP1>;
 		reset-names = "axi", "ahb", "dclk";
+		rockchip,grf = <&grf>;
 		status = "okay";
 
 		vopl_out: port {
@@ -1878,7 +1879,7 @@
 			vopl_out_edp: endpoint@1 {
 				reg = <1>;
 				remote-endpoint = <&edp_in_vopl>;
-				status = "disabled";
+				status = "okay";
 			};
 
 			vopl_out_hdmi: endpoint@2 {
@@ -1934,6 +1935,7 @@
 		reset-names = "axi", "ahb", "dclk";
 		power-domains = <&power RK3399_PD_VOPB>;
 		iommus = <&vopb_mmu>;
+		rockchip,grf = <&grf>;
 		status = "okay";
 
 		vopb_out: port {
@@ -1943,7 +1945,6 @@
 			vopb_out_edp: endpoint@0 {
 				reg = <0>;
 				remote-endpoint = <&edp_in_vopb>;
-				status = "disabled";
 			};
 
 			vopb_out_dsi: endpoint@1 {
@@ -2068,7 +2069,7 @@
 		power-domains = <&power RK3399_PD_HDCP>;
 		reg-io-width = <4>;
 		rockchip,grf = <&grf>;
-		status = "disabled";
+		status = "okay";
 
 		ports {
 			hdmi_in: port {
@@ -2081,6 +2082,7 @@
 				hdmi_in_vopl: endpoint@1 {
 					reg = <1>;
 					remote-endpoint = <&vopl_out_hdmi>;
+					status = "disabled";
 				};
 			};
 		};
@@ -2175,24 +2177,17 @@
 		power-domains = <&power RK3399_PD_EDP>;
 		resets = <&cru SRST_P_EDP_CTRL>;
 		reset-names = "dp";
+		rockchip,grf = <&grf>;
 		status = "okay";
 
 		ports {
 			#address-cells = <1>;
 			#size-cells = <0>;
-
-			edp_out_lt7911d: port@0 {
-				reg = <1>;
-				remote-endpoint = <&lt7911d_in>;
-				data-lanes = <1 2 3 4>;
-				status = "okay";
-			};
-
-			port@1 {
-				reg = <1>;
+			edp_in: port@0 {
+				reg = <0>;
 				#address-cells = <1>;
 				#size-cells = <0>;
-				status = "disabled";
+
 				edp_in_vopb: endpoint@0 {
 					reg = <0>;
 					remote-endpoint = <&vopb_out_edp>;
@@ -2213,7 +2208,7 @@
 		clocks = <&cru ACLK_HDCP22>, <&cru PCLK_HDCP22>,
 			 <&cru HCLK_HDCP22>;
 		clock-names ="aclk_hdcp2", "pclk_hdcp2", "hdcp2_clk_hdmi";
-		status = "disabled";
+		status = "okay";
 	};
 
 	display_subsystem: display-subsystem {
@@ -2587,8 +2582,8 @@
 		i2c7 {
 			i2c7_xfer: i2c7-xfer {
 				rockchip,pins =
-					<2 8 RK_FUNC_2 &pcfg_pull_none>,
-					<2 7 RK_FUNC_2 &pcfg_pull_none>;
+					<2 RK_PB0 RK_FUNC_2 &pcfg_pull_none>,
+					<2 RK_PA7 RK_FUNC_2 &pcfg_pull_none>;
 			};
 		};
 
@@ -3032,7 +3027,8 @@
 			mipim1_camera1_clk: mipim1-camera1-clk {
 				rockchip,pins =
 					/* mipim1_camera1_clk */
-					<2 RK_PB2 RK_FUNC_1 &pcfg_pull_none>; // gpio2_b0 - MIPI_CAMERA1_CLK_M1
+					<2 RK_PA7 RK_FUNC_1 &pcfg_pull_none>,
+					<2 RK_PB0 RK_FUNC_1 &pcfg_pull_none>; // gpio2_b0 - MIPI_CAMERA1_CLK_M1
 			};
 		};
 

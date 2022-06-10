@@ -1,0 +1,4 @@
+#ifndef __DT_BINDINGS_VAAMAN_H__
+#define __DT_BINDINGS_VAAMAN_H__
+
+#define PCLK_MIPI_DCPHY0 

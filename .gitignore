@@ -59,7 +59,7 @@ Module.symvers
 #
 # Out directory
 #
-/out/
+out/
 
 #
 # Debian directory (make deb-pkg)
