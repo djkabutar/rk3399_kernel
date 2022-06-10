@@ -60,7 +60,7 @@
 	#size-cells = <2>;
 
 	aliases {
-		// csi2dcphy0 = &csi2_dcphy0;
+		csi2dcphy0 = &csi2_dcphy0;
 		dsi0 = &dsi;
 		dsi1 = &dsi1;
 		ethernet0 = &gmac;
@@ -1472,6 +1472,33 @@
 		interrupts = <GIC_SPI 42 IRQ_TYPE_LEVEL_HIGH 0>;
 		interrupt-names = "iep_mmu";
 		#iommu-cells = <0>;
+		status = "disabled";
+	};
+
+	csi2_dcphy0: csi2-dcphy0 {
+		compatible = "rockchip,rk3399-csi2-dcphy";
+		// rockchip,hw = <&csi2_dcphy0_hw>;
+		status = "disabled";
+	};
+
+	mipi0_csi2: mipi0-csi2@fdd10000 {
+		compatible = "rockchip,rk3399-mipi-csi2";
+		reg = <0x0 0xfdd10000 0x0 0x10000>;
+		// reg-names = "csihost_regs";
+		// interrupts = <GIC_SPI 143 IRQ_TYPE_LEVEL_HIGH>,
+		// 	     <GIC_SPI 144 IRQ_TYPE_LEVEL_HIGH>;
+		// interrupt-names = "csi-intr1", "csi-intr2";
+		// clocks = <&cru PCLK_CSI_HOST_0>, <&cru ICLK_CSIHOST0>;
+		// clock-names = "pclk_csi2host", "iclk_csi2host";
+		// resets = <&cru SRST_P_CSI_HOST_0>, <&cru SRST_CSIHOST0_VICAP>;
+		// reset-names = "srst_csihost_p", "srst_csihost_vicap";
+		status = "disabled";
+	};
+
+	rkcif_mipi_lvds: rkcif-mipi-lvds {
+		compatible = "rockchip,rkcif-mipi-lvds";
+		// rockchip,hw = <&rkcif>;
+		// iommus = <&rkcif_mmu>;
 		status = "disabled";
 	};
 

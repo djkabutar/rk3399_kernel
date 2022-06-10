@@ -304,79 +304,79 @@
 	status = "okay";
 };
 
-// &csi2_dcphy0 {
-// 	status = "okay";
+&csi2_dcphy0 {
+	status = "okay";
 
-// 	ports {
-// 		#address-cells = <1>;
-// 		#size-cells = <0>;
-// 		#reg = <0>;
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		#reg = <0>;
 
-// 		port@0 {
-// 			reg = <0>;
-// 			#address-cells = <1>;
-// 			#size-cells = <0>;
+		port@0 {
+			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
 
-// 			dp_mipi_in: endpoint@1 {
-// 				reg = <1>;
-// 				remote-endpoint = <&lt7911d_out>;
-// 				data-lanes = <1 2 3 4>;
-// 			};
-// 		};
+			dp_mipi_in: endpoint@1 {
+				reg = <1>;
+				remote-endpoint = <&lt7911d_out>;
+				data-lanes = <1 2 3 4>;
+			};
+		};
 
-// 		port@1 {
-// 			reg = <1>;
-// 			#address-cells = <1>;
-// 			#size-cells = <0>;
+		port@1 {
+			reg = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
 
-// 			csidcphy0_out: endpoint@0 {
-// 				reg = <0>;
-// 				remote-endpoint = <&mipi0_csi2_input>;
-// 			};
-// 		};
-// 	};
-// };
+			csidcphy0_out: endpoint@0 {
+				reg = <0>;
+				remote-endpoint = <&mipi0_csi2_input>;
+			};
+		};
+	};
+};
 
-// &mipi0_csi2 {
-// 	status = "okay";
+&mipi0_csi2 {
+	status = "okay";
 
-// 	ports {
-// 		#address-cells = <1>;
-// 		#size-cells = <0>;
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
 
-// 		port@0 {
-// 			reg = <0>;
-// 			#address-cells = <1>;
-// 			#size-cells = <0>;
+		port@0 {
+			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
 
-// 			mipi0_csi2_input: endpoint@1 {
-// 				reg = <1>;
-// 				remote-endpoint = <&csidcphy0_out>;
-// 			};
-// 		};
+			mipi0_csi2_input: endpoint@1 {
+				reg = <1>;
+				remote-endpoint = <&csidcphy0_out>;
+			};
+		};
 
-// 		port@1 {
-// 			reg = <1>;
-// 			#address-cells = <1>;
-// 			#size-cells = <0>;
+		port@1 {
+			reg = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
 
-// 			mipi0_csi2_output: endpoint@0 {
-// 				reg = <0>;
-// 				remote-endpoint = <&cif_mipi_in0>;
-// 			};
-// 		};
-// 	};
-// };
+			mipi0_csi2_output: endpoint@0 {
+				reg = <0>;
+				remote-endpoint = <&cif_mipi_in0>;
+			};
+		};
+	};
+};
 
-// &rkcif_mipi_lvds {
-// 	status = "okay";
+&rkcif_mipi_lvds {
+	status = "okay";
 
-// 	port {
-// 		cif_mipi_in0: endpoint {
-// 			remote-endpoint = <&mipi0_csi2_output>;
-// 		};
-// 	};
-// };
+	port {
+		cif_mipi_in0: endpoint {
+			remote-endpoint = <&mipi0_csi2_output>;
+		};
+	};
+};
 
 &sdmmc {
 	supports-sd;
@@ -830,12 +830,12 @@
 		rockchip,camera-module-facing = "back";
 		rockchip,camera-module-name = "LT7911D";
 		rockchip,camera-module-lens-name = "NC";
-		// port {
-		// 	lt7911d_out: endpoint {
-		// 		remote-endpoint = <&dp_mipi_in>;
-		// 		data-lanes = <1 2 3 4>;
-		// 	};
-		// };
+		port {
+			lt7911d_out: endpoint {
+				remote-endpoint = <&dp_mipi_in>;
+				data-lanes = <1 2 3 4>;
+			};
+		};
 	};
 };
 
