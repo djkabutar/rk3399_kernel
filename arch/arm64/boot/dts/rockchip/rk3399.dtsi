@@ -1487,9 +1487,6 @@
 		status = "disabled";
 	};
 
-	csi2_dcphy0: csi2-dcphy0 {
-		status = "disabled";
-	};
 
 	efuse0: efuse@ff690000 {
 		compatible = "rockchip,rk3399-efuse";
