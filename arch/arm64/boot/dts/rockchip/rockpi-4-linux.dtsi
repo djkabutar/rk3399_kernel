@@ -305,7 +305,7 @@
 };
 
 &csi2_dcphy0 {
-	status = "okay";
+	status = "disabled";
 
 	ports {
 		#address-cells = <1>;
@@ -320,7 +320,6 @@
 			dp_mipi_in: endpoint@1 {
 				reg = <1>;
 				remote-endpoint = <&lt7911d_out>;
-				data-lanes = <1 2 3 4>;
 			};
 		};
 
@@ -329,8 +328,8 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-			csidcphy0_out: endpoint@0 {
-				reg = <0>;
+			csidcphy0_out: endpoint@1 {
+				reg = <1>;
 				remote-endpoint = <&mipi0_csi2_input>;
 			};
 		};
@@ -360,8 +359,8 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-			mipi0_csi2_output: endpoint@0 {
-				reg = <0>;
+			mipi0_csi2_output: endpoint@1 {
+				reg = <1>;
 				remote-endpoint = <&cif_mipi_in0>;
 			};
 		};
@@ -815,25 +814,45 @@
 		compatible = "lontium,lt7911d";
 		status = "okay";
 		reg = <0x2b>;
-		clocks = <&cru CLK_MIPI_CAMARAOUT_M1>;
-		clock-names = "xvclk";
-		interrupt-parent = <&gpio3>;
-		interrupts = <RK_PD4 IRQ_TYPE_EDGE_RISING>;
+		clocks = <&cru 27000000>;
+		// clock-names = "xvclk";
+		interrupt-parent = <&gpio0>;
+		interrupts = <RK_PB5 IRQ_TYPE_EDGE_RISING>;
 		power-domains = <&power RK3399_PD_VI>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&mipim1_camera1_clk>;
+		power-supply = <&vcc3v3_s0>;
+		// backlight = <&backlight>;
+		force-hpd;
+		// pinctrl-names = "default";
+		// pinctrl-0 = <&mipim1_camera1_clk>;
 		reset-gpios = <&gpio3 RK_PC4 GPIO_ACTIVE_LOW>;
-		power-gpios = <&gpio1 RK_PA6 GPIO_ACTIVE_HIGH>;
+		// power-gpios = <&gpio1 RK_PA6 GPIO_ACTIVE_HIGH>;
 		// hpd-ctl-gpios = <&gpio3 RK_PC5 GPIO_ACTIVE_HIGH>;
 		// plugin-det-gpios = <&gpio0 RK_PD6 GPIO_ACTIVE_LOW>;
 		rockchip,camera-module-index = <0>;
 		rockchip,camera-module-facing = "back";
 		rockchip,camera-module-name = "LT7911D";
 		rockchip,camera-module-lens-name = "NC";
-		port {
-			lt7911d_out: endpoint {
-				remote-endpoint = <&dp_mipi_in>;
-				data-lanes = <1 2 3 4>;
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			port@0 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				lt7911d_out: endpoint@1 {
+					status = "disabled";
+					reg = <1>;
+					remote-endpoint = <&dp_mipi_in>;
+				};
+			};
+
+			port@1 {
+				status = "disabled";
+				#address-cells = <1>;
+				#size-cells = <0>;
+				lt7911d_in_edp: endpoint {
+					remote-endpoint = <&edp_out_lt7911d>;
+					// data-lanes = <1 2 3 4>;
+				};
 			};
 		};
 	};
@@ -1361,7 +1380,7 @@
 };
 
 &hdmi_in_vopl {
-	status = "disabled";
+	status = "okay";
 };
 
 &hdmi_in_vopb {
@@ -1375,70 +1394,41 @@
 
 &edp {
 	status = "disabled";
-	/delete-node/ pinctrl-0;
+	force-hpd;
+	// /delete-node/ pinctrl-0;
+
+	ports {
+		edp_out: port@1 {
+			status = "disabled"; 
+			reg = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			edp_out_lt7911d: endpoint@0 {
+				reg = <0>;
+				remote-endpoint = <&lt7911d_in_edp>;
+				// data-lanes = <1 2 3 4>;
+			};
+		};
+	};
 };
 
-// &csi2_dcphy0 {
-// 	status = "disabled";
-// 	ports{
-// 		#address-cells = <1>;
-// 		#size-cells = <0>;
-// 		port@0 {
-// 			reg = <0>;
-// 			#address-cells = <1>;
-// 			#size-cells = <0>;
-
-// 			edp_tx_in: endpoint@0 {
-// 				reg = <0>;
-// 				remote-endpoint = <&vopl_out_edp>;
-// 			};
-// 		};
-
-// 		port@1 {
-// 			reg = <1>;
-// 			#address-cells = <1>;
-// 			#size-cells = <0>;
-
-// 			edp_out_lt7911d: endpoint@0 {
-// 				reg = <0>;
-// 				remote-endpoint = <&lt7911d_in_vopl>;
-// 				data-lanes = <1 2 3 4>;
-// 			};
-// 		};
-
-// 		port@2 {
-// 			reg = <2>;
-// 			#address-cells = <1>;
-// 			#size-cells = <0>;
-
-// 			edp_tx_out: endpoint@0 {
-// 				reg = <0>;
-// 				remote-endpoint = <&edp_in_vopl>;
-// 			};
-// 		};
-// 	};
-// };
-
-// &lt7911d {
-// 	status = "disabled";
-// 	port {
-// 		lt7911d_in_vopl: endpoint {
-// 			status = "okay";
-// 			remote-endpoint = <&edp_out_lt7911d>;
-// 			data-lanes = <1 2 3 4>;
-// 		};
-// 	};
-// };
-
-// &vopl_out_edp {
-// 	status = "disabled";
-// 	remote-endpoint = <&edp_tx_in>;
-// };
-
 &route_edp {
+	status = "disabled";
+};
+
+&vopb_out_edp {
+	status = "disabled";
+};
+
+&vopl_out_edp {
+	status = "disabled";
+};
+
+&vopl {
 	status = "okay";
 };
 
-&edp_in_vopl {
+&vopb {
 	status = "okay";
 };

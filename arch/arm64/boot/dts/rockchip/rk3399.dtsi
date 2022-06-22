@@ -1906,7 +1906,6 @@
 			vopl_out_edp: endpoint@1 {
 				reg = <1>;
 				remote-endpoint = <&edp_in_vopl>;
-				status = "okay";
 			};
 
 			vopl_out_hdmi: endpoint@2 {
@@ -2109,7 +2108,7 @@
 				hdmi_in_vopl: endpoint@1 {
 					reg = <1>;
 					remote-endpoint = <&vopl_out_hdmi>;
-					status = "disabled";
+					// status = "disabled";
 				};
 			};
 		};
