@@ -4,23 +4,39 @@ scripts/kconfig/conf  --silentoldconfig Kconfig
   CHK     include/config/kernel.release
   GEN     ./Makefile
   CHK     include/generated/uapi/linux/version.h
-grep: include/linux/mali/mali_utgard_uk_types.h: No such file or directory
   Using .. as source for kernel
   CHK     include/generated/utsrelease.h
   CHK     scripts/mod/devicetable-offsets.h
   CHK     include/generated/timeconst.h
+grep: include/linux/mali/mali_utgard_uk_types.h: No such file or directory
   CHK     include/generated/bounds.h
   CHK     include/generated/asm-offsets.h
   CALL    ../scripts/checksyscalls.sh
 make[2]: 'include/generated/vdso-offsets.h' is up to date.
   CHK     include/generated/compile.h
-  DTC     arch/arm64/boot/dts/rockchip/rockpi-4a-linux.dtb
   DTC     arch/arm64/boot/dts/rockchip/rockpi-4b-linux.dtb
-  DTC     arch/arm64/boot/dts/rockchip/rockpi-4c-linux.dtb
   GZIP    kernel/config_data.gz
   CHK     kernel/config_data.h
 grep: include/linux/mali/mali_utgard_uk_types.h: No such file or directory
-  Building modules, stage 2.
+  CC      drivers/gpu/drm/drm_of.o
+  LD      drivers/gpu/drm/drm.o
+  LD      drivers/gpu/drm/built-in.o
+  LD      drivers/gpu/built-in.o
+  LD      drivers/built-in.o
+  LINK    vmlinux
+  LD      vmlinux.o
+  MODPOST vmlinux.o
+  GEN     .version
+  CHK     include/generated/compile.h
+  UPD     include/generated/compile.h
+  CC      init/version.o
+  LD      init/built-in.o
+  KSYM    .tmp_kallsyms1.o
+  KSYM    .tmp_kallsyms2.o
+  LD      vmlinux
+  SORTEX  vmlinux
+  SYSMAP  System.map
   OBJCOPY arch/arm64/boot/Image
+  Building modules, stage 2.
   MODPOST 2 modules
 make[1]: Leaving directory '/home/dj/kernel_rockchip_linux/out'

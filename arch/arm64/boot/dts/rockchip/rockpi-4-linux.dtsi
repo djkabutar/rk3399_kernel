@@ -836,22 +836,22 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			port@0 {
+				status = "disabled";
 				#address-cells = <1>;
 				#size-cells = <0>;
 				lt7911d_out: endpoint@1 {
-					status = "disabled";
 					reg = <1>;
 					remote-endpoint = <&dp_mipi_in>;
 				};
 			};
 
 			port@1 {
-				status = "disabled";
+				status = "okay";
 				#address-cells = <1>;
 				#size-cells = <0>;
 				lt7911d_in_edp: endpoint {
 					remote-endpoint = <&edp_out_lt7911d>;
-					// data-lanes = <1 2 3 4>;
+					data-lanes = <1 2 3 4>;
 				};
 			};
 		};
@@ -1384,22 +1384,23 @@
 };
 
 &hdmi_in_vopb {
-	status = "okay";
+	status = "disabled";
 };
 
 &route_hdmi {
 	status = "okay";
-	connect = <&vopb_out_hdmi>;
+	connect = <&vopl_out_hdmi>;
 };
 
 &edp {
-	status = "disabled";
+	status = "okay";
+	names = "rockchip-dp";
 	force-hpd;
-	// /delete-node/ pinctrl-0;
+	/delete-node/ pinctrl-0;
 
 	ports {
 		edp_out: port@1 {
-			status = "disabled"; 
+			status = "okay"; 
 			reg = <1>;
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -1407,22 +1408,27 @@
 			edp_out_lt7911d: endpoint@0 {
 				reg = <0>;
 				remote-endpoint = <&lt7911d_in_edp>;
-				// data-lanes = <1 2 3 4>;
+				data-lanes = <1 2 3 4>;
 			};
 		};
 	};
 };
 
 &route_edp {
-	status = "disabled";
+	status = "okay";
+	connect = <&vopb_out_edp>;
 };
 
 &vopb_out_edp {
-	status = "disabled";
+	status = "okay";
 };
 
 &vopl_out_edp {
 	status = "disabled";
+};
+
+&edp_in_vopb {
+	status = "okay";
 };
 
 &vopl {
@@ -1432,3 +1438,4 @@
 &vopb {
 	status = "okay";
 };
+
