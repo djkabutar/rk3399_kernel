@@ -168,16 +168,19 @@ static int try_to_bring_up_master(struct master *master,
 	 */
 	if (find_components(master)) {
 		/* Failed to find all components */
+		dev_info(master->dev, "Can not find all components: %d\n", ret);
 		ret = 0;
 		goto out;
 	}
 
 	if (component && component->master != master) {
+		dev_info(master->dev, "Component Master: %d\n", ret);
 		ret = 0;
 		goto out;
 	}
 
 	if (!devres_open_group(master->dev, NULL, GFP_KERNEL)) {
+		dev_info(master->dev, "Devres group cannot open: %d\n", ret);
 		ret = -ENOMEM;
 		goto out;
 	}
@@ -187,7 +190,7 @@ static int try_to_bring_up_master(struct master *master,
 	if (ret < 0) {
 		devres_release_group(master->dev, NULL);
 		dev_info(master->dev, "master bind failed: %d\n", ret);
-		goto out;
+		// goto out;
 	}
 
 	master->bound = true;

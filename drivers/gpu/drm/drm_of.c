@@ -210,12 +210,16 @@ int drm_of_find_panel_or_bridge(const struct device_node *np,
 	int ret = -EPROBE_DEFER;
 	struct device_node *remote;
 
-	if (!panel && !bridge)
+	if (!panel && !bridge) {
+		printk(KERN_DEBUG "Invalid panel or bridge\n");
 		return -EINVAL;
+	}
 
 	remote = of_graph_get_remote_node(np, port, endpoint);
-	if (!remote)
+	if (!remote) {
+		printk(KERN_DEBUG "Getting remote endpoint and ports\n");
 		return -ENODEV;
+	}
 
 	if (panel) {
 		*panel = of_drm_find_panel(remote);
@@ -230,6 +234,7 @@ int drm_of_find_panel_or_bridge(const struct device_node *np,
 			if (*bridge)
 				ret = 0;
 		} else {
+			printk(KERN_DEBUG "Bridge not found\n");
 			*bridge = NULL;
 		}
 

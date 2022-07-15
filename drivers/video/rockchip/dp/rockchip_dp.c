@@ -91,9 +91,11 @@ static int rockchip_dp_detect_hotplug(struct hdmi *hdmi_drv)
 {
 	struct dp_dev *dp_dev = hdmi_drv->property->priv;
 
+	printk(KERN_DEBUG "DP device detected!");
+
 	if (cdn_dp_connector_detect(dp_dev->dp))
 		return HDMI_HPD_ACTIVATED;
-	return HDMI_HPD_REMOVED;
+	return HDMI_HPD_ACTIVATED;
 }
 
 static int rockchip_dp_read_edid(struct hdmi *hdmi_drv, int block, u8 *buf)

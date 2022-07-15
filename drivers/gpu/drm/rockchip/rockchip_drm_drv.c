@@ -1398,6 +1398,8 @@ static int rockchip_drm_bind(struct device *dev)
 
 	drm_dev->dev_private = private;
 
+	printk(KERN_DEBUG "Rockchip drm bind!");
+
 	private->dmc_support = false;
 	private->devfreq = devfreq_get_devfreq_by_phandle(dev, 0);
 	if (IS_ERR(private->devfreq)) {

@@ -896,6 +896,8 @@ static int cdn_dp_probe(struct platform_device *pdev)
 	match = of_match_node(cdn_dp_dt_ids, pdev->dev.of_node);
 	dp_data = (struct cdn_dp_data *)match->data;
 
+	printk(KERN_DEBUG "eDP probed Successfully");
+
 	for (i = 0; i < dp_data->max_phy; i++) {
 		extcon = extcon_get_edev_by_phandle(dev, i);
 		phy = devm_of_phy_get_by_index(dev, dev->of_node, i);

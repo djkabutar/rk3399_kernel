@@ -352,16 +352,24 @@ static int rockchip_dp_bind(struct device *dev, struct device *master,
 	struct drm_device *drm_dev = data;
 	int ret;
 
+	printk(KERN_DEBUG "Rockchip DP Bind\n");
+
 	ret = drm_of_find_panel_or_bridge(dev->of_node, 1, 0, &panel, &bridge);
-	if (ret)
-		return ret;
+	dev_info(dp->dev, "Finding drm panel or bridge\n");
+	if (ret) {
+		dev_dbg(dp->dev, "Finding drm panel or bridge failed\n");
+		 return ret;
+	}
 
 	dp->plat_data.panel = panel;
 	dp->plat_data.bridge = bridge;
 
 	dp_data = of_device_get_match_data(dev);
-	if (!dp_data)
+	dev_info(dp->dev, "Device matching\n");
+	if (!dp_data) {
+		dev_dbg(dp->dev, "Device doesn't match\n");
 		return -ENODEV;
+	}
 
 	ret = rockchip_dp_init(dp);
 	if (ret < 0)
@@ -371,6 +379,7 @@ static int rockchip_dp_bind(struct device *dev, struct device *master,
 	dp->drm_dev = drm_dev;
 
 	ret = rockchip_dp_drm_create_encoder(dp);
+	dev_info(dp->dev, "creating drm encoder\n");
 	if (ret) {
 		DRM_ERROR("failed to create drm encoder\n");
 		return ret;
@@ -385,8 +394,11 @@ static int rockchip_dp_bind(struct device *dev, struct device *master,
 	dp->plat_data.get_modes = rockchip_dp_get_modes;
 
 	dp->adp = analogix_dp_bind(dev, dp->drm_dev, &dp->plat_data);
-	if (IS_ERR(dp->adp))
+	printk(KERN_DEBUG "Analogix DP bind");
+	if (IS_ERR(dp->adp)) {
+		printk(KERN_DEBUG "Problem in analogix DP bind");
 		return PTR_ERR(dp->adp);
+	}
 
 	return 0;
 }
@@ -408,6 +420,8 @@ static int rockchip_dp_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct rockchip_dp_device *dp;
+
+	dev_info(dev, "DP probbed!\n");
 
 	dp = devm_kzalloc(dev, sizeof(*dp), GFP_KERNEL);
 	if (!dp)
