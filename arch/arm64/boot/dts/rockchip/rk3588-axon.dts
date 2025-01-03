@@ -58,6 +58,17 @@
 		regulator-max-microvolt = <1100000>;
 		vin-supply = <&vcc1_5v0>;
 	};
+
+	vcc3v3_io_expander: vcc3v3-io-expander {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc3v3_io_expander";
+		regulator-always-on;
+		regulator-boot-on;
+		enable-active-high;
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		vin-supply = <&vcc_3v3_s3>;
+	};
 };
 
 
@@ -570,6 +581,17 @@
 		regulator-state-mem {
 			regulator-off-in-suspend;
 		};
+	};
+};
+
+&i2c6 {
+	pca9554: gpio@24 {
+		compatible = "nxp,pca9554";
+		#gpio-cells = <2>;
+		gpio-controller;
+		reg = <0x24>;
+		vcc-supply = <&vcc3v3_io_expander>;
+		status = "okay";
 	};
 };
 
