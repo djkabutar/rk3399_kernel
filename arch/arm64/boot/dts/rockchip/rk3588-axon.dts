@@ -12,6 +12,7 @@
 
 	aliases {
 		mmc0 = &sdmmc;
+		mmc1 = &sdhci;
 		serial2 = &uart2;
 	};
 
@@ -98,6 +99,18 @@
 &cpu_l3 {
 	cpu-supply = <&vdd_cpu_lit_s0>;
 	mem-supply = <&vdd_cpu_lit_mem_s0>;
+};
+
+&sdhci {
+	bus-width = <8>;
+	full-pwr-cycle-in-suspend;
+	max-frequency = <200000000>;
+	mmc-hs400-1_8v;
+	mmc-hs400-enhanced-strobe;
+	no-sd;
+	no-sdio;
+	non-removable;
+	status = "okay";
 };
 
 &sdmmc {
