@@ -89,6 +89,9 @@
 #define __no_sanitize_coverage
 #endif
 
+/* Only Clang needs to disable the coverage sanitizer for kstack_erase. */
+#define __no_kstack_erase	__no_sanitize_coverage
+
 #if __has_feature(shadow_call_stack)
 # define __noscs	__attribute__((__no_sanitize__("shadow-call-stack")))
 #endif
@@ -128,3 +131,11 @@
  */
 #define ASM_INPUT_G "ir"
 #define ASM_INPUT_RM "r"
+
+/*
+ * Declare compiler support for __typeof_unqual__() operator.
+ *
+ * Bindgen uses LLVM even if our C compiler is GCC, so we cannot
+ * rely on the auto-detected CONFIG_CC_HAS_TYPEOF_UNQUAL.
+ */
+#define CC_HAS_TYPEOF_UNQUAL (__clang_major__ >= 19)

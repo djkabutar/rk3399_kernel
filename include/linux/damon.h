@@ -36,6 +36,16 @@ struct damon_addr_range {
 };
 
 /**
+ * struct damon_size_range - Represents size for filter to operate on [@min, @max].
+ * @min:	Min size (inclusive).
+ * @max:	Max size (inclusive).
+ */
+struct damon_size_range {
+	unsigned long min;
+	unsigned long max;
+};
+
+/**
  * struct damon_region - Represents a monitoring target region.
  * @ar:			The address range of the region.
  * @sampling_addr:	Address of the sample for the next access check.
@@ -135,6 +145,8 @@ enum damos_action {
  *
  * @DAMOS_QUOTA_USER_INPUT:	User-input value.
  * @DAMOS_QUOTA_SOME_MEM_PSI_US:	System level some memory PSI in us.
+ * @DAMOS_QUOTA_NODE_MEM_USED_BP:	MemUsed ratio of a node.
+ * @DAMOS_QUOTA_NODE_MEM_FREE_BP:	MemFree ratio of a node.
  * @NR_DAMOS_QUOTA_GOAL_METRICS:	Number of DAMOS quota goal metrics.
  *
  * Metrics equal to larger than @NR_DAMOS_QUOTA_GOAL_METRICS are unsupported.
@@ -142,6 +154,8 @@ enum damos_action {
 enum damos_quota_goal_metric {
 	DAMOS_QUOTA_USER_INPUT,
 	DAMOS_QUOTA_SOME_MEM_PSI_US,
+	DAMOS_QUOTA_NODE_MEM_USED_BP,
+	DAMOS_QUOTA_NODE_MEM_FREE_BP,
 	NR_DAMOS_QUOTA_GOAL_METRICS,
 };
 
@@ -151,6 +165,7 @@ enum damos_quota_goal_metric {
  * @target_value:	Target value of @metric to achieve with the tuning.
  * @current_value:	Current value of @metric.
  * @last_psi_total:	Last measured total PSI
+ * @nid:		Node id.
  * @list:		List head for siblings.
  *
  * Data structure for getting the current score of the quota tuning goal.  The
@@ -169,6 +184,7 @@ struct damos_quota_goal {
 	/* metric-dependent fields */
 	union {
 		u64 last_psi_total;
+		int nid;
 	};
 	struct list_head list;
 };
@@ -324,8 +340,11 @@ struct damos_stat {
 /**
  * enum damos_filter_type - Type of memory for &struct damos_filter
  * @DAMOS_FILTER_TYPE_ANON:	Anonymous pages.
+ * @DAMOS_FILTER_TYPE_ACTIVE:	Active pages.
  * @DAMOS_FILTER_TYPE_MEMCG:	Specific memcg's pages.
  * @DAMOS_FILTER_TYPE_YOUNG:	Recently accessed pages.
+ * @DAMOS_FILTER_TYPE_HUGEPAGE_SIZE:	Page is part of a hugepage.
+ * @DAMOS_FILTER_TYPE_UNMAPPED:	Unmapped pages.
  * @DAMOS_FILTER_TYPE_ADDR:	Address range.
  * @DAMOS_FILTER_TYPE_TARGET:	Data Access Monitoring target.
  * @NR_DAMOS_FILTER_TYPES:	Number of filter types.
@@ -343,8 +362,11 @@ struct damos_stat {
  */
 enum damos_filter_type {
 	DAMOS_FILTER_TYPE_ANON,
+	DAMOS_FILTER_TYPE_ACTIVE,
 	DAMOS_FILTER_TYPE_MEMCG,
 	DAMOS_FILTER_TYPE_YOUNG,
+	DAMOS_FILTER_TYPE_HUGEPAGE_SIZE,
+	DAMOS_FILTER_TYPE_UNMAPPED,
 	DAMOS_FILTER_TYPE_ADDR,
 	DAMOS_FILTER_TYPE_TARGET,
 	NR_DAMOS_FILTER_TYPES,
@@ -360,6 +382,7 @@ enum damos_filter_type {
  * @target_idx:	Index of the &struct damon_target of
  *		&damon_ctx->adaptive_targets if @type is
  *		DAMOS_FILTER_TYPE_TARGET.
+ * @sz_range:	Size range if @type is DAMOS_FILTER_TYPE_HUGEPAGE_SIZE.
  * @list:	List head for siblings.
  *
  * Before applying the &damos->action to a memory region, DAMOS checks if each
@@ -376,6 +399,7 @@ struct damos_filter {
 		unsigned short memcg_id;
 		struct damon_addr_range addr_range;
 		int target_idx;
+		struct damon_size_range sz_range;
 	};
 	struct list_head list;
 };
@@ -424,14 +448,33 @@ struct damos_access_pattern {
 };
 
 /**
+ * struct damos_migrate_dests - Migration destination nodes and their weights.
+ * @node_id_arr:	Array of migration destination node ids.
+ * @weight_arr:		Array of migration weights for @node_id_arr.
+ * @nr_dests:		Length of the @node_id_arr and @weight_arr arrays.
+ *
+ * @node_id_arr is an array of the ids of migration destination nodes.
+ * @weight_arr is an array of the weights for those.  The weights in
+ * @weight_arr are for nodes in @node_id_arr of same array index.
+ */
+struct damos_migrate_dests {
+	unsigned int *node_id_arr;
+	unsigned int *weight_arr;
+	size_t nr_dests;
+};
+
+/**
  * struct damos - Represents a Data Access Monitoring-based Operation Scheme.
  * @pattern:		Access pattern of target regions.
- * @action:		&damo_action to be applied to the target regions.
+ * @action:		&damos_action to be applied to the target regions.
  * @apply_interval_us:	The time between applying the @action.
  * @quota:		Control the aggressiveness of this scheme.
  * @wmarks:		Watermarks for automated (in)activation of this scheme.
+ * @migrate_dests:	Destination nodes if @action is "migrate_{hot,cold}".
  * @target_nid:		Destination node if @action is "migrate_{hot,cold}".
  * @filters:		Additional set of &struct damos_filter for &action.
+ * @ops_filters:	ops layer handling &struct damos_filter objects list.
+ * @last_applied:	Last @action applied ops-managing entity.
  * @stat:		Statistics of this scheme.
  * @list:		List head for siblings.
  *
@@ -446,13 +489,25 @@ struct damos_access_pattern {
  * monitoring context are inactive, DAMON stops monitoring either, and just
  * repeatedly checks the watermarks.
  *
+ * @migrate_dests specifies multiple migration target nodes with different
+ * weights for migrate_hot or migrate_cold actions.  @target_nid is ignored if
+ * this is set.
+ *
  * @target_nid is used to set the migration target node for migrate_hot or
- * migrate_cold actions, which means it's only meaningful when @action is either
- * "migrate_hot" or "migrate_cold".
+ * migrate_cold actions, and @migrate_dests is unset.
  *
  * Before applying the &action to a memory region, &struct damon_operations
  * implementation could check pages of the region and skip &action to respect
  * &filters
+ *
+ * The minimum entity that @action can be applied depends on the underlying
+ * &struct damon_operations.  Since it may not be aligned with the core layer
+ * abstract, namely &struct damon_region, &struct damon_operations could apply
+ * @action to same entity multiple times.  Large folios that underlying on
+ * multiple &struct damon region objects could be such examples.  The &struct
+ * damon_operations can use @last_applied to avoid that.  DAMOS core logic
+ * unsets @last_applied when each regions walking for applying the scheme is
+ * finished.
  *
  * After applying the &action to each region, &stat_count and &stat_sz is
  * updated to reflect the number of regions and total size of regions that the
@@ -470,13 +525,26 @@ struct damos {
 	unsigned long next_apply_sis;
 	/* informs if ongoing DAMOS walk for this scheme is finished */
 	bool walk_completed;
+	/*
+	 * If the current region in the filtering stage is allowed by core
+	 * layer-handled filters.  If true, operations layer allows it, too.
+	 */
+	bool core_filters_allowed;
+	/* whether to reject core/ops filters umatched regions */
+	bool core_filters_default_reject;
+	bool ops_filters_default_reject;
 /* public: */
 	struct damos_quota quota;
 	struct damos_watermarks wmarks;
 	union {
-		int target_nid;
+		struct {
+			int target_nid;
+			struct damos_migrate_dests migrate_dests;
+		};
 	};
 	struct list_head filters;
+	struct list_head ops_filters;
+	void *last_applied;
 	struct damos_stat stat;
 	struct list_head list;
 };
@@ -505,10 +573,10 @@ enum damon_ops_id {
  * @update:			Update operations-related data structures.
  * @prepare_access_checks:	Prepare next access check of target regions.
  * @check_accesses:		Check the accesses to target regions.
- * @reset_aggregated:		Reset aggregated accesses monitoring results.
  * @get_scheme_score:		Get the score of a region for a scheme.
  * @apply_scheme:		Apply a DAMON-based operation scheme.
  * @target_valid:		Determine if the target is valid.
+ * @cleanup_target:		Clean up each target before deallocation.
  * @cleanup:			Clean up the context.
  *
  * DAMON can be extended for various address spaces and usages.  For this,
@@ -517,8 +585,7 @@ enum damon_ops_id {
  * (&damon_ctx.kdamond) calls @init and @prepare_access_checks before starting
  * the monitoring, @update after each &damon_attrs.ops_update_interval, and
  * @check_accesses, @target_valid and @prepare_access_checks after each
- * &damon_attrs.sample_interval.  Finally, @reset_aggregated is called after
- * each &damon_attrs.aggr_interval.
+ * &damon_attrs.sample_interval.
  *
  * Each &struct damon_operations instance having valid @id can be registered
  * via damon_register_ops() and selected by damon_select_ops() later.
@@ -533,8 +600,6 @@ enum damon_ops_id {
  * last preparation and update the number of observed accesses of each region.
  * It should also return max number of observed accesses that made as a result
  * of its update.  The value will be used for regions adjustment threshold.
- * @reset_aggregated should reset the access monitoring results that aggregated
- * by @check_accesses.
  * @get_scheme_score should return the priority score of a region for a scheme
  * as an integer in [0, &DAMOS_MAX_SCORE].
  * @apply_scheme is called from @kdamond when a region for user provided
@@ -544,6 +609,7 @@ enum damon_ops_id {
  * filters (&struct damos_filter) that handled by itself.
  * @target_valid should check whether the target is still valid for the
  * monitoring.
+ * @cleanup_target is called before the target will be deallocated.
  * @cleanup is called from @kdamond just before its termination.
  */
 struct damon_operations {
@@ -552,7 +618,6 @@ struct damon_operations {
 	void (*update)(struct damon_ctx *context);
 	void (*prepare_access_checks)(struct damon_ctx *context);
 	unsigned int (*check_accesses)(struct damon_ctx *context);
-	void (*reset_aggregated)(struct damon_ctx *context);
 	int (*get_scheme_score)(struct damon_ctx *context,
 			struct damon_target *t, struct damon_region *r,
 			struct damos *scheme);
@@ -560,50 +625,8 @@ struct damon_operations {
 			struct damon_target *t, struct damon_region *r,
 			struct damos *scheme, unsigned long *sz_filter_passed);
 	bool (*target_valid)(struct damon_target *t);
+	void (*cleanup_target)(struct damon_target *t);
 	void (*cleanup)(struct damon_ctx *context);
-};
-
-/**
- * struct damon_callback - Monitoring events notification callbacks.
- *
- * @before_start:	Called before starting the monitoring.
- * @after_wmarks_check:	Called after each schemes' watermarks check.
- * @after_sampling:	Called after each sampling.
- * @after_aggregation:	Called after each aggregation.
- * @before_damos_apply:	Called before applying DAMOS action.
- * @before_terminate:	Called before terminating the monitoring.
- * @private:		User private data.
- *
- * The monitoring thread (&damon_ctx.kdamond) calls @before_start and
- * @before_terminate just before starting and finishing the monitoring,
- * respectively.  Therefore, those are good places for installing and cleaning
- * @private.
- *
- * The monitoring thread calls @after_wmarks_check after each DAMON-based
- * operation schemes' watermarks check.  If users need to make changes to the
- * attributes of the monitoring context while it's deactivated due to the
- * watermarks, this is the good place to do.
- *
- * The monitoring thread calls @after_sampling and @after_aggregation for each
- * of the sampling intervals and aggregation intervals, respectively.
- * Therefore, users can safely access the monitoring results without additional
- * protection.  For the reason, users are recommended to use these callback for
- * the accesses to the results.
- *
- * If any callback returns non-zero, monitoring stops.
- */
-struct damon_callback {
-	void *private;
-
-	int (*before_start)(struct damon_ctx *context);
-	int (*after_wmarks_check)(struct damon_ctx *context);
-	int (*after_sampling)(struct damon_ctx *context);
-	int (*after_aggregation)(struct damon_ctx *context);
-	int (*before_damos_apply)(struct damon_ctx *context,
-			struct damon_target *target,
-			struct damon_region *region,
-			struct damos *scheme);
-	void (*before_terminate)(struct damon_ctx *context);
 };
 
 /*
@@ -611,6 +634,7 @@ struct damon_callback {
  *
  * @fn:			Function to be called back.
  * @data:		Data that will be passed to @fn.
+ * @repeat:		Repeat invocations.
  * @return_code:	Return code from @fn invocation.
  *
  * Control damon_call(), which requests specific kdamond to invoke a given
@@ -619,12 +643,40 @@ struct damon_callback {
 struct damon_call_control {
 	int (*fn)(void *data);
 	void *data;
+	bool repeat;
 	int return_code;
 /* private: internal use only */
 	/* informs if the kdamond finished handling of the request */
 	struct completion completion;
 	/* informs if the kdamond canceled @fn infocation */
 	bool canceled;
+	/* List head for siblings. */
+	struct list_head list;
+};
+
+/**
+ * struct damon_intervals_goal - Monitoring intervals auto-tuning goal.
+ *
+ * @access_bp:		Access events observation ratio to achieve in bp.
+ * @aggrs:		Number of aggregations to achieve @access_bp within.
+ * @min_sample_us:	Minimum resulting sampling interval in microseconds.
+ * @max_sample_us:	Maximum resulting sampling interval in microseconds.
+ *
+ * DAMON automatically tunes &damon_attrs->sample_interval and
+ * &damon_attrs->aggr_interval aiming the ratio in bp (1/10,000) of
+ * DAMON-observed access events to theoretical maximum amount within @aggrs
+ * aggregations be same to @access_bp.  The logic increases
+ * &damon_attrs->aggr_interval and &damon_attrs->sampling_interval in same
+ * ratio if the current access events observation ratio is lower than the
+ * target for each @aggrs aggregations, and vice versa.
+ *
+ * If @aggrs is zero, the tuning is disabled and hence this struct is ignored.
+ */
+struct damon_intervals_goal {
+	unsigned long access_bp;
+	unsigned long aggrs;
+	unsigned long min_sample_us;
+	unsigned long max_sample_us;
 };
 
 /**
@@ -633,6 +685,7 @@ struct damon_call_control {
  * @sample_interval:		The time between access samplings.
  * @aggr_interval:		The time between monitor results aggregations.
  * @ops_update_interval:	The time between monitoring operations updates.
+ * @intervals_goal:		Intervals auto-tuning goal.
  * @min_nr_regions:		The minimum number of adaptive monitoring
  *				regions.
  * @max_nr_regions:		The maximum number of adaptive monitoring
@@ -646,14 +699,26 @@ struct damon_call_control {
  * ``mmap()`` calls from the application, in case of virtual memory monitoring)
  * and applies the changes for each @ops_update_interval.  All time intervals
  * are in micro-seconds.  Please refer to &struct damon_operations and &struct
- * damon_callback for more detail.
+ * damon_call_control for more detail.
  */
 struct damon_attrs {
 	unsigned long sample_interval;
 	unsigned long aggr_interval;
 	unsigned long ops_update_interval;
+	struct damon_intervals_goal intervals_goal;
 	unsigned long min_nr_regions;
 	unsigned long max_nr_regions;
+/* private: internal use only */
+	/*
+	 * @aggr_interval to @sample_interval ratio.
+	 * Core-external components call damon_set_attrs() with &damon_attrs
+	 * that this field is unset.  In the case, damon_set_attrs() sets this
+	 * field of resulting &damon_attrs.  Core-internal components such as
+	 * kdamond_tune_intervals() calls damon_set_attrs() with &damon_attrs
+	 * that this field is set.  In the case, damon_set_attrs() just keep
+	 * it.
+	 */
+	unsigned long aggr_samples;
 };
 
 /**
@@ -681,7 +746,6 @@ struct damon_attrs {
  * Accesses to other fields must be protected by themselves.
  *
  * @ops:	Set of monitoring operations for given use cases.
- * @callback:	Set of callbacks for monitoring events notifications.
  *
  * @adaptive_targets:	Head of monitoring targets (&damon_target) list.
  * @schemes:		Head of schemes (&damos) list.
@@ -702,13 +766,19 @@ struct damon_ctx {
 	 * update
 	 */
 	unsigned long next_ops_update_sis;
+	/*
+	 * number of sample intervals that should be passed before next
+	 * intervals tuning
+	 */
+	unsigned long next_intervals_tune_sis;
 	/* for waiting until the execution of the kdamond_fn is started */
 	struct completion kdamond_started;
 	/* for scheme quotas prioritization */
 	unsigned long *regions_score_histogram;
 
-	struct damon_call_control *call_control;
-	struct mutex call_control_lock;
+	/* lists of &struct damon_call_control */
+	struct list_head call_controls;
+	struct mutex call_controls_lock;
 
 	struct damos_walk_control *walk_control;
 	struct mutex walk_control_lock;
@@ -718,7 +788,6 @@ struct damon_ctx {
 	struct mutex kdamond_lock;
 
 	struct damon_operations ops;
-	struct damon_callback callback;
 
 	struct list_head adaptive_targets;
 	struct list_head schemes;
@@ -783,6 +852,12 @@ static inline unsigned long damon_sz_region(struct damon_region *r)
 #define damos_for_each_filter_safe(f, next, scheme) \
 	list_for_each_entry_safe(f, next, &(scheme)->filters, list)
 
+#define damos_for_each_ops_filter(f, scheme) \
+	list_for_each_entry(f, &(scheme)->ops_filters, list)
+
+#define damos_for_each_ops_filter_safe(f, next, scheme) \
+	list_for_each_entry_safe(f, next, &(scheme)->ops_filters, list)
+
 #ifdef CONFIG_DAMON
 
 struct damon_region *damon_new_region(unsigned long start, unsigned long end);
@@ -808,6 +883,7 @@ void damon_update_region_access_rate(struct damon_region *r, bool accessed,
 struct damos_filter *damos_new_filter(enum damos_filter_type type,
 		bool matching, bool allow);
 void damos_add_filter(struct damos *s, struct damos_filter *f);
+bool damos_filter_for_ops(enum damos_filter_type type);
 void damos_destroy_filter(struct damos_filter *f);
 
 struct damos_quota_goal *damos_new_quota_goal(
@@ -830,7 +906,7 @@ struct damon_target *damon_new_target(void);
 void damon_add_target(struct damon_ctx *ctx, struct damon_target *t);
 bool damon_targets_empty(struct damon_ctx *ctx);
 void damon_free_target(struct damon_target *t);
-void damon_destroy_target(struct damon_target *t);
+void damon_destroy_target(struct damon_target *t, struct damon_ctx *ctx);
 unsigned int damon_nr_regions(struct damon_target *t);
 
 struct damon_ctx *damon_new_ctx(void);
@@ -859,6 +935,7 @@ static inline unsigned int damon_max_nr_accesses(const struct damon_attrs *attrs
 
 int damon_start(struct damon_ctx **ctxs, int nr_ctxs, bool exclusive);
 int damon_stop(struct damon_ctx **ctxs, int nr_ctxs);
+bool damon_is_running(struct damon_ctx *ctx);
 
 int damon_call(struct damon_ctx *ctx, struct damon_call_control *control);
 int damos_walk(struct damon_ctx *ctx, struct damos_walk_control *control);

@@ -813,7 +813,7 @@ static int ocfs2_write_zero_page(struct inode *inode, u64 abs_from,
 
 
 		/* must not update i_size! */
-		block_commit_write(&folio->page, block_start + 1, block_start + 1);
+		block_commit_write(folio, block_start + 1, block_start + 1);
 	}
 
 	/*
@@ -2800,7 +2800,7 @@ const struct inode_operations ocfs2_special_file_iops = {
  */
 const struct file_operations ocfs2_fops = {
 	.llseek		= ocfs2_file_llseek,
-	.mmap		= ocfs2_mmap,
+	.mmap_prepare	= ocfs2_mmap_prepare,
 	.fsync		= ocfs2_sync_file,
 	.release	= ocfs2_file_release,
 	.open		= ocfs2_file_open,
@@ -2850,7 +2850,7 @@ const struct file_operations ocfs2_dops = {
  */
 const struct file_operations ocfs2_fops_no_plocks = {
 	.llseek		= ocfs2_file_llseek,
-	.mmap		= ocfs2_mmap,
+	.mmap_prepare	= ocfs2_mmap_prepare,
 	.fsync		= ocfs2_sync_file,
 	.release	= ocfs2_file_release,
 	.open		= ocfs2_file_open,

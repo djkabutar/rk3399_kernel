@@ -56,7 +56,7 @@ static long samsung_pll_round_rate(struct clk_hw *hw,
 	const struct samsung_pll_rate_table *rate_table = pll->rate_table;
 	int i;
 
-	/* Assumming rate_table is in descending order */
+	/* Assuming rate_table is in descending order */
 	for (i = 0; i < pll->rate_count; i++) {
 		if (drate >= rate_table[i].rate)
 			return rate_table[i].rate;
@@ -1465,6 +1465,7 @@ static void __init _samsung_clk_register_pll(struct samsung_clk_provider *ctx,
 			init.ops = &samsung_pll2650xx_clk_ops;
 		break;
 	case pll_531x:
+	case pll_4311:
 		init.ops = &samsung_pll531x_clk_ops;
 		break;
 	default:
