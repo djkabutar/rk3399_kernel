@@ -684,6 +684,9 @@
 				&gmac1_tx_bus2
 				&gmac1_miim>;
 	pinctrl-names = "default";
+	snps,reset-active-low;
+	snps,reset-delays-us = <0 20000 100000>;
+	snps,reset-gpio = <&gpio3 RK_PB7 GPIO_ACTIVE_LOW>;
 	rx_delay = <0x00>;
 	tx_delay = <0x43>;
 	status = "okay";
@@ -878,13 +881,8 @@
 &mdio1 {
 	rgmii_phy: ethernet-phy@1 {
 		/* RTL8211F */
-		compatible = "ethernet-phy-id001c.c916";
+		compatible = "ethernet-phy-ieee802.3-c22";
 		reg = <0x1>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&rtl8211f_rst>;
-		reset-assert-us = <20000>;
-		reset-deassert-us = <100000>;
-		reset-gpios = <&gpio3 RK_PB7 GPIO_ACTIVE_LOW>;
 		status = "okay";
 	};
 };
