@@ -114,8 +114,9 @@ struct xfs_gc_bio {
 	/* Open Zone being written to */
 	struct xfs_open_zone		*oz;
 
+	struct xfs_rtgroup		*victim_rtg;
+
 	/* Bio used for reads and writes, including the bvec used by it */
-	struct bio_vec			bv;
 	struct bio			bio;	/* must be last */
 };
 
@@ -173,14 +174,13 @@ xfs_zoned_need_gc(
 	s64			available, free, threshold;
 	s32			remainder;
 
-	if (!xfs_group_marked(mp, XG_TYPE_RTG, XFS_RTG_RECLAIMABLE))
+	if (!xfs_zoned_have_reclaimable(mp->m_zone_info))
 		return false;
 
 	available = xfs_estimate_freecounter(mp, XC_FREE_RTAVAILABLE);
 
 	if (available <
-	    mp->m_groups[XG_TYPE_RTG].blocks *
-	    (mp->m_max_open_zones - XFS_OPEN_GC_ZONES))
+	    xfs_rtgs_to_rfsbs(mp, mp->m_max_open_zones - XFS_OPEN_GC_ZONES))
 		return true;
 
 	free = xfs_estimate_freecounter(mp, XC_FREE_RTEXTENTS);
@@ -264,6 +264,7 @@ xfs_zone_gc_iter_init(
 	iter->rec_count = 0;
 	iter->rec_idx = 0;
 	iter->victim_rtg = victim_rtg;
+	atomic_inc(&victim_rtg->rtg_gccount);
 }
 
 /*
@@ -362,6 +363,7 @@ xfs_zone_gc_query(
 
 	return 0;
 done:
+	atomic_dec(&iter->victim_rtg->rtg_gccount);
 	xfs_rtgroup_rele(iter->victim_rtg);
 	iter->victim_rtg = NULL;
 	return 0;
@@ -450,6 +452,20 @@ xfs_zone_gc_pick_victim_from(
 
 		if (!rtg)
 			continue;
+
+		/*
+		 * If the zone is already undergoing GC, don't pick it again.
+		 *
+		 * This prevents us from picking one of the zones for which we
+		 * already submitted GC I/O, but for which the remapping hasn't
+		 * concluded yet.  This won't cause data corruption, but
+		 * increases write amplification and slows down GC, so this is
+		 * a bad thing.
+		 */
+		if (atomic_read(&rtg->rtg_gccount)) {
+			xfs_rtgroup_rele(rtg);
+			continue;
+		}
 
 		/* skip zones that are just waiting for a reset */
 		if (rtg_rmap(rtg)->i_used_blocks == 0 ||
@@ -688,6 +704,9 @@ xfs_zone_gc_start_chunk(
 	chunk->scratch = &data->scratch[data->scratch_idx];
 	chunk->data = data;
 	chunk->oz = oz;
+	chunk->victim_rtg = iter->victim_rtg;
+	atomic_inc(&chunk->victim_rtg->rtg_group.xg_active_ref);
+	atomic_inc(&chunk->victim_rtg->rtg_gccount);
 
 	bio->bi_iter.bi_sector = xfs_rtb_to_daddr(mp, chunk->old_startblock);
 	bio->bi_end_io = xfs_zone_gc_end_io;
@@ -710,6 +729,8 @@ static void
 xfs_zone_gc_free_chunk(
 	struct xfs_gc_bio	*chunk)
 {
+	atomic_dec(&chunk->victim_rtg->rtg_gccount);
+	xfs_rtgroup_rele(chunk->victim_rtg);
 	list_del(&chunk->entry);
 	xfs_open_zone_put(chunk->oz);
 	xfs_irele(chunk->ip);
@@ -769,6 +790,10 @@ xfs_zone_gc_split_write(
 	split_chunk->new_daddr = chunk->new_daddr;
 	split_chunk->oz = chunk->oz;
 	atomic_inc(&chunk->oz->oz_ref);
+
+	split_chunk->victim_rtg = chunk->victim_rtg;
+	atomic_inc(&chunk->victim_rtg->rtg_group.xg_active_ref);
+	atomic_inc(&chunk->victim_rtg->rtg_gccount);
 
 	chunk->offset += split_len;
 	chunk->len -= split_len;
@@ -1157,16 +1182,16 @@ xfs_zone_gc_mount(
 		goto out_put_gc_zone;
 	}
 
-	mp->m_zone_info->zi_gc_thread = kthread_create(xfs_zoned_gcd, data,
+	zi->zi_gc_thread = kthread_create(xfs_zoned_gcd, data,
 			"xfs-zone-gc/%s", mp->m_super->s_id);
-	if (IS_ERR(mp->m_zone_info->zi_gc_thread)) {
+	if (IS_ERR(zi->zi_gc_thread)) {
 		xfs_warn(mp, "unable to create zone gc thread");
-		error = PTR_ERR(mp->m_zone_info->zi_gc_thread);
+		error = PTR_ERR(zi->zi_gc_thread);
 		goto out_free_gc_data;
 	}
 
 	/* xfs_zone_gc_start will unpark for rw mounts */
-	kthread_park(mp->m_zone_info->zi_gc_thread);
+	kthread_park(zi->zi_gc_thread);
 	return 0;
 
 out_free_gc_data:
