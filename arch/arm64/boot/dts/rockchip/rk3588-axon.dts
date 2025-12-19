@@ -141,6 +141,18 @@
 		vin-supply = <&vcc1_5v0>;
 	};
 
+	sata_vcc_5v0: sata-vcc-5v0 {
+		compatible = "regulator-fixed";
+		regulator-name = "sata_vcc_5v0";
+		startup-delay-us = <5000>;
+		regulator-boot-on;
+		regulator-always-on;
+		enable-active-high;
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		vin-supply = <&vcc12v_dcin>;
+	};
+
 	vbus5v0_typec0: vbus5v0-typec0-regulator {
 		compatible = "regulator-fixed";
 		regulator-name = "vbus5v0_typec0";
@@ -213,6 +225,11 @@
 		vin-supply = <&vcc12v_dcin>;
 	};
 
+};
+
+
+&combphy0_ps {
+	status = "okay";
 };
 
 &combphy1_ps {
@@ -988,6 +1005,10 @@
 
 &saradc {
 	vref-supply = <&avcc_1v8_s0>;
+	status = "okay";
+};
+
+&sata0 {
 	status = "okay";
 };
 
